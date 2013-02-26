@@ -284,6 +284,16 @@ public class VectorTest {
     }
 
     @Test
+    public void testElementWiseMultiplication() {
+        Vector x = Vector.of(1.0, 1.0, 1.0);
+        Vector y = Vector.of(2.0, 3.0, 4.0);
+        assertEquals(y, x.multiply(y));
+
+        Vector z = Vector.of(3.0, 6.0, 9.0);
+        assertEquals(Vector.of(6.0, 18.0, 36.0), y.multiply(z));
+    }
+
+    @Test
     public void equals() {
         Vector a = Vector.of(1.0, 2.0);
         Vector b = Vector.of(1.0, 2.0);
@@ -424,5 +434,15 @@ public class VectorTest {
         Vector v1 = Vector.of(1.0, 2.0, 3.0, 4.0);
         Rand.setSeed(1);
         assertEquals(v1.permute(), Vector.of(2.0, 4.0, 3.0, 1.0));
+    }
+
+    @Test
+    public void testSample() {
+        Vector v1 = Vector.of(1.0, 2.0, 3.0, 4.0);
+        Rand.setSeed(1);
+
+        assertEquals(Real.valueOf(2.0), v1.sample());
+        assertEquals(Real.valueOf(4.0), v1.sample());
+        assertEquals(Real.valueOf(3.0), v1.sample());
     }
 }

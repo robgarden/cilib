@@ -495,6 +495,20 @@ public class Vector implements StructuredType<Numeric>,
     /**
      * {@inheritDoc}
      */
+    public final Vector multiply(Vector vector) {
+        if (this.components.length != vector.size()) {
+            throw new UnsupportedOperationException("Cannot multiply vectors with differing dimensions");
+        }
+        Numeric[] result = new Numeric[components.length];
+        for (int i = 0; i < components.length; i++) {
+            result[i] = Real.valueOf(components[i].doubleValue() * vector.doubleValueOf(i));
+        }
+        return new Vector(result);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final double norm() {
         return Math.sqrt(foldLeft(0, new F<Numeric, Double>() {
@@ -898,6 +912,14 @@ public class Vector implements StructuredType<Numeric>,
         }
 
         return builder.build();
+    }
+
+    /**
+     * Sample an element uniformly from the {@code Vector}.
+     * @return A uniformly sampled {@code Numeric}.
+     */
+    public Numeric sample() {
+        return get(Rand.nextInt(size()));
     }
 
     /**

@@ -66,12 +66,121 @@
         </problem>
 
         <!-- 1.4 Buche-Rastrigin Function -->
+        <problem id="f4" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
+            <function class="functions.continuous.hybrid.SimpleHybridFunction">
+                <addFunction class="functions.continuous.decorators.ScaledFunctionDecorator">
+                    <verticalScale class="controlparameter.ConstantControlParameter" parameter="100" />
+                    <function class="functions.continuous.Penalty">
+                        <boundary class="controlparameter.ConstantControlParameter" parameter="5" />
+                    </function>
+                </addFunction>
+                <addFunction class="functions.continuous.decorators.ShiftedFunctionDecorator">
+                    <function class="functions.continuous.decorators.IrregularFunctionDecorator">
+                        <function class="functions.continuous.unconstrained.modified.BucheRastrigin" />
+                    </function>
+                    <horizontalShift class="controlparameter.FixedControlParameter">
+                        <controlParameter class="controlparameter.RandomControlParameter">
+                            <distribution class="math.random.UniformDistribution">
+                                <lowerBound class="controlparameter.ConstantControlParameter" parameter="-4.0" />
+                                <upperBound class="controlparameter.ConstantControlParameter" parameter="4.0" />
+                            </distribution>
+                        </controlParameter>
+                    </horizontalShift>
+                </addFunction>
+            </function>
+        </problem>
+
         <!-- 1.5 Linear Slope -->
+        <problem id="f5" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
+            <function class="functions.continuous.unconstrained.modified.LinearSlope">
+                <horizontalShift class="controlparameter.FixedControlParameter">
+                    <controlParameter class="controlparameter.RandomControlParameter">
+                        <distribution class="math.random.UniformDistribution">
+                            <lowerBound class="controlparameter.ConstantControlParameter" parameter="-5.0" />
+                            <upperBound class="controlparameter.ConstantControlParameter" parameter="5.0" />
+                        </distribution>
+                    </controlParameter>
+                </horizontalShift>
+            </function>
+        </problem>
 
         <!-- 2.6 Attractive Sector Function -->
+        <problem id="f6" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
+            <function class="functions.continuous.decorators.ShiftedFunctionDecorator">
+                <function class="functions.continuous.decorators.RotatedFunctionDecorator">
+                    <function class="functions.continuous.decorators.IllConditionedFunctionDecorator">
+                        <alpha class="controlparameter.ConstantControlParameter" parameter="10" />
+                        <function class="functions.continuous.decorators.RotatedFunctionDecorator">
+                            <function class="functions.continuous.unconstrained.modified.AttractiveSector">
+                                <horizontalShift class="controlparameter.ConstantControlParameter" parameter="4.0" />
+                            </function>
+                        </function>
+                    </function>
+                </function>
+                <horizontalShift class="controlparameter.ConstantControlParameter" parameter="4.0" />
+            </function>
+        </problem>
+
         <!-- 2.7 Step Ellipsoidal Function -->
+        <problem id="f7" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
+            <function class="functions.continuous.hybrid.SimpleHybridFunction">
+                <addFunction class="functions.continuous.Penalty">
+                    <boundary class="controlparameter.ConstantControlParameter" parameter="5" />
+                </addFunction>
+                <addFunction class="functions.continuous.decorators.ShiftedFunctionDecorator">
+                    <function class="functions.continuous.decorators.RotatedFunctionDecorator">
+                        <function class="functions.continuous.decorators.IllConditionedFunctionDecorator">
+                            <alpha class="controlparameter.ConstantControlParameter" parameter="10" />
+                            <function class="functions.continuous.unconstrained.modified.StepEllipsoidal" />
+                        </function>
+                    </function>
+                    <horizontalShift class="controlparameter.FixedControlParameter">
+                        <controlParameter class="controlparameter.RandomControlParameter">
+                            <distribution class="math.random.UniformDistribution">
+                                <lowerBound class="controlparameter.ConstantControlParameter" parameter="-5.0" />
+                                <upperBound class="controlparameter.ConstantControlParameter" parameter="5.0" />
+                            </distribution>
+                        </controlParameter>
+                    </horizontalShift>
+                </addFunction>
+            </function>
+        </problem>
+
         <!-- 2.8 Rosenbrock Function, original -->
+        <problem id="f8" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
+            <function class="functions.continuous.decorators.ShiftedFunctionDecorator">
+                <function class="functions.continuous.decorators.ScaledFunctionDecorator">
+                    <!-- vertical scale is max(1, sqrt(D) / 8) -->
+                    <verticalScale class="controlparameter.ConstantControlParameter" parameter="1" />
+                    <function class="functions.continuous.decorators.ScaledFunctionDecorator">
+                        <horizontalScale class="controlparameter.ConstantControlParameter" parameter="1" />
+                        <function class="functions.continuous.unconstrained.Rosenbrock" />
+                    </function>
+                </function>
+                <horizontalShift class="controlparameter.FixedControlParameter">
+                    <controlParameter class="controlparameter.RandomControlParameter">
+                        <distribution class="math.random.UniformDistribution">
+                            <lowerBound class="controlparameter.ConstantControlParameter" parameter="-4.0" />
+                            <upperBound class="controlparameter.ConstantControlParameter" parameter="4.0" />
+                        </distribution>
+                    </controlParameter>
+                </horizontalShift>
+            </function>
+        </problem>
+
         <!-- 2.9 Rosenbrock Function rotated -->
+        <problem id="f9" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
+            <function class="functions.continuous.decorators.RotatedFunctionDecorator">
+                <function class="functions.continuous.decorators.ScaledFunctionDecorator">
+                    <!-- vertical scale is max(1, sqrt(D) / 8) -->
+                    <verticalScale class="controlparameter.ConstantControlParameter" parameter="1" />
+                    <function class="functions.continuous.decorators.ScaledFunctionDecorator">
+                        <horizontalScale class="controlparameter.ConstantControlParameter" parameter="0.5" />
+                        <function class="functions.continuous.unconstrained.Rosenbrock" />
+                    </function>
+                </function>
+            </function>
+        </problem>
 
         <!-- 3.10 Ellipsoidal Function -->
         <problem id="f10" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
@@ -153,7 +262,7 @@
                     </controlParameter>
                 </horizontalShift>
             </function>
-        </problem>        
+        </problem>
 
         <!-- 3.14 Different Powers Function -->
         <problem id="f14" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
@@ -202,13 +311,48 @@
         </problem>
 
         <!-- 4.16 Weierstrass Function -->
+        <problem id="f16" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
+            <function class="functions.continuous.hybrid.SimpleHybridFunction">
+                <addFunction class="functions.continuous.decorators.ScaledFunctionDecorator">
+                    <!-- vertical scale of penalty is 1 / D -->
+                    <verticalScale class="controlparameter.ConstantControlParameter" parameter="1" />
+                    <function class="functions.continuous.Penalty">
+                        <boundary class="controlparameter.ConstantControlParameter" parameter="5" />
+                    </function>
+                </addFunction>
+                <addFunction class="functions.continuous.decorators.ShiftedFunctionDecorator">
+                    <function class="functions.continuous.decorators.RotatedFunctionDecorator">
+                        <function class="functions.continuous.decorators.IrregularFunctionDecorator">
+                            <function class="functions.continuous.decorators.RotatedFunctionDecorator">
+                                <function class="functions.continuous.decorators.IllConditionedFunctionDecorator">
+                                    <alpha class="controlparameter.ConstantControlParameter" parameter="0.01" />
+                                    <function class="functions.continuous.decorators.RotatedFunctionDecorator">
+                                        <function class="functions.continuous.unconstrained.Schaffer7" />
+                                    </function>
+                                </function>
+                            </function>
+                        </function>
+                    </function>
+                    <horizontalShift class="controlparameter.FixedControlParameter">
+                        <controlParameter class="controlparameter.RandomControlParameter">
+                            <distribution class="math.random.UniformDistribution">
+                                <lowerBound class="controlparameter.ConstantControlParameter" parameter="-4.0" />
+                                <upperBound class="controlparameter.ConstantControlParameter" parameter="4.0" />
+                            </distribution>
+                        </controlParameter>
+                    </horizontalShift>
+                </addFunction>
+            </function>
+        </problem>
 
         <!-- 4.17 Schaffers F7 Function -->
         <problem id="f17" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
             <function class="functions.continuous.hybrid.SimpleHybridFunction">
                 <addFunction class="functions.continuous.decorators.ScaledFunctionDecorator">
                     <verticalScale class="controlparameter.ConstantControlParameter" parameter="10" />
-                    <function class="functions.continuous.Penalty" />
+                    <function class="functions.continuous.Penalty">
+                        <boundary class="controlparameter.ConstantControlParameter" parameter="5" />
+                    </function>
                 </addFunction>
                 <addFunction class="functions.continuous.decorators.ShiftedFunctionDecorator">
                     <function class="functions.continuous.decorators.RotatedFunctionDecorator">
@@ -239,7 +383,9 @@
             <function class="functions.continuous.hybrid.SimpleHybridFunction">
                 <addFunction class="functions.continuous.decorators.ScaledFunctionDecorator">
                     <verticalScale class="controlparameter.ConstantControlParameter" parameter="10" />
-                    <function class="functions.continuous.Penalty" />
+                    <function class="functions.continuous.Penalty">
+                        <boundary class="controlparameter.ConstantControlParameter" parameter="5" />
+                    </function>
                 </addFunction>
                 <addFunction class="functions.continuous.decorators.ShiftedFunctionDecorator">
                     <function class="functions.continuous.decorators.RotatedFunctionDecorator">
@@ -266,15 +412,39 @@
         </problem>
 
         <!-- 4.19 Composite Griewank-Rosenbrock Function F8F2 -->
+        <problem id="f19" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
+            <function class="functions.continuous.decorators.RotatedFunctionDecorator">
+                <function class="functions.continuous.decorators.ScaledFunctionDecorator">
+                    <!-- vertical scale is max(1, sqrt(D) / 8) -->
+                    <verticalScale class="controlparameter.ConstantControlParameter" parameter="1" />
+                    <function class="functions.continuous.decorators.ShiftedFunctionDecorator">
+                        <horizontalShift class="controlparameter.ConstantControlParameter" parameter="0.5" />
+                        <function class="functions.continuous.unconstrained.modified.GriewankRosenbrock" />
+                    </function>
+                </function>
+            </function>
+        </problem>
 
         <!-- 5.20 Schwefel Function -->
+        <problem id="f20" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
+            <!-- shifting and ill-conditioning is done within this function -->
+            <function class="functions.continuous.unconstrained.modified.Schwefel" />
+        </problem>
+
         <!-- 5.21 Gallagher's Gaussian 101-me Peaks Function -->
+
         <!-- 5.22 Gallagher's Gaussian 21-hi Peaks Function -->
+        <problem id="f22" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
+            <!-- shifting and ill-conditioning is done within this function -->
+            <function class="functions.continuous.unconstrained.modified.GallagherGaussianPeaks" />
+        </problem>
 
         <!-- 5.23 Katsuura Function -->
         <problem id="f23" class="problem.FunctionOptimisationProblem" domain="R(-5:5)^10">
             <function class="functions.continuous.hybrid.SimpleHybridFunction">
-                <addFunction class="functions.continuous.Penalty" />
+                <addFunction class="functions.continuous.Penalty">
+                    <boundary class="controlparameter.ConstantControlParameter" parameter="5" />
+                </addFunction>
                 <addFunction class="functions.continuous.decorators.ShiftedFunctionDecorator">
                     <function class="functions.continuous.decorators.RotatedFunctionDecorator">
                         <function class="functions.continuous.decorators.IllConditionedFunctionDecorator">
@@ -301,7 +471,9 @@
             <function class="functions.continuous.hybrid.SimpleHybridFunction">
                 <addFunction class="functions.continuous.decorators.ScaledFunctionDecorator">
                     <verticalScale class="controlparameter.ConstantControlParameter" parameter="1E4" />
-                    <function class="functions.continuous.Penalty" />
+                    <function class="functions.continuous.Penalty">
+                        <boundary class="controlparameter.ConstantControlParameter" parameter="5" />
+                    </function>
                 </addFunction>
                 <addFunction class="functions.continuous.unconstrained.LunacekBiRastrigin">
                     <rastriginDecorator class="functions.continuous.decorators.RotatedFunctionDecorator">
@@ -351,6 +523,42 @@
         </simulation>
         <simulation samples="5">
             <algorithm idref="pso"/>
+            <problem idref="f4"/>
+            <measurements idref="measurements" />
+            <output format="TXT" file="data/rpblackbox-pso-f4.txt"/>
+        </simulation>
+        <simulation samples="5">
+            <algorithm idref="pso"/>
+            <problem idref="f5"/>
+            <measurements idref="measurements" />
+            <output format="TXT" file="data/rpblackbox-pso-f5.txt"/>
+        </simulation>
+        <simulation samples="5">
+            <algorithm idref="pso"/>
+            <problem idref="f6"/>
+            <measurements idref="measurements" />
+            <output format="TXT" file="data/rpblackbox-pso-f6.txt"/>
+        </simulation>
+        <simulation samples="5">
+            <algorithm idref="pso"/>
+            <problem idref="f7"/>
+            <measurements idref="measurements" />
+            <output format="TXT" file="data/rpblackbox-pso-f7.txt"/>
+        </simulation>
+        <simulation samples="5">
+            <algorithm idref="pso"/>
+            <problem idref="f8"/>
+            <measurements idref="measurements" />
+            <output format="TXT" file="data/rpblackbox-pso-f8.txt"/>
+        </simulation>
+        <simulation samples="5">
+            <algorithm idref="pso"/>
+            <problem idref="f9"/>
+            <measurements idref="measurements" />
+            <output format="TXT" file="data/rpblackbox-pso-f9.txt"/>
+        </simulation>
+        <simulation samples="5">
+            <algorithm idref="pso"/>
             <problem idref="f10"/>
             <measurements idref="measurements" />
             <output format="TXT" file="data/rpblackbox-pso-f10.txt"/>
@@ -387,6 +595,12 @@
         </simulation>
         <simulation samples="5">
             <algorithm idref="pso"/>
+            <problem idref="f16"/>
+            <measurements idref="measurements" />
+            <output format="TXT" file="data/rpblackbox-pso-f16.txt"/>
+        </simulation>
+        <simulation samples="5">
+            <algorithm idref="pso"/>
             <problem idref="f17"/>
             <measurements idref="measurements" />
             <output format="TXT" file="data/rpblackbox-pso-f17.txt"/>
@@ -396,6 +610,24 @@
             <problem idref="f18"/>
             <measurements idref="measurements" />
             <output format="TXT" file="data/rpblackbox-pso-f18.txt"/>
+        </simulation>
+        <simulation samples="5">
+            <algorithm idref="pso"/>
+            <problem idref="f19"/>
+            <measurements idref="measurements" />
+            <output format="TXT" file="data/rpblackbox-pso-f19.txt"/>
+        </simulation>
+        <simulation samples="1">
+            <algorithm idref="pso"/>
+            <problem idref="f20"/>
+            <measurements idref="measurements" />
+            <output format="TXT" file="data/rpblackbox-pso-f20.txt"/>
+        </simulation>
+        <simulation samples="1">
+            <algorithm idref="pso"/>
+            <problem idref="f22"/>
+            <measurements idref="measurements" />
+            <output format="TXT" file="data/rpblackbox-pso-f22.txt"/>
         </simulation>
         <simulation samples="5">
             <algorithm idref="pso"/>

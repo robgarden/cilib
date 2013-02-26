@@ -24,12 +24,11 @@ import net.sourceforge.cilib.type.types.container.Vector;
  * </p>
  */
 public class IrregularFunctionDecorator implements ContinuousFunction {
-
     private ContinuousFunction function;
+    private F<Numeric, Numeric> mapping;
 
-    @Override
-    public Double apply(Vector input) {
-        return function.apply(input.map(new F<Numeric, Numeric>() {
+    public IrregularFunctionDecorator() {
+        this.mapping = new F<Numeric, Numeric>() {
             @Override
             public Numeric f(Numeric a) {
                 double x = a.doubleValue();
@@ -39,7 +38,16 @@ public class IrregularFunctionDecorator implements ContinuousFunction {
                 double result = Math.signum(x) * Math.exp(xHat + 0.049 * (Math.sin(xHat * c1) + Math.sin(xHat * c2)));
                 return Real.valueOf(result);
             }
-        }));
+        };
+    }
+
+    @Override
+    public Double apply(Vector input) {
+        return function.apply(input.map(mapping));
+    }
+
+    public F<Numeric, Numeric> getMapping() {
+        return this.mapping;
     }
 
     public void setFunction(ContinuousFunction function) {

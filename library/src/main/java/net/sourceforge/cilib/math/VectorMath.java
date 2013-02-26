@@ -46,6 +46,14 @@ public interface VectorMath {
     Vector multiply(double scalar);
 
     /**
+     * Perform element-wise multiplication. Multiply a each element in a {@code Vector}
+     * by the corresponding element in another {@code Vector}.
+     * @param vector The {@code Vector}
+     * @return A new {@code Vector} instance containing the result of the operator.
+     */
+    Vector multiply(Vector vector);
+
+    /**
      * Calculate the norm of this <tt>Vector</tt> object. All the elements must
      * be of type {@see net.sourceforge.cilib.type.types.Numeric}.
      *

@@ -27,7 +27,7 @@ public class SynchronousIterationStrategy extends AbstractIterationStrategy<PSO>
     }
 
     /**
-     * This is an Synchronous strategy:
+     * This is a Synchronous strategy:
      *
      * <ol>
      *   <li>For all particles:</li>

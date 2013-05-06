@@ -8,9 +8,8 @@ package net.sourceforge.cilib.pso.iterationstrategies;
 
 import net.sourceforge.cilib.entity.Topology;
 import net.sourceforge.cilib.pso.PSO;
-import net.sourceforge.cilib.pso.velocityprovider.VelocityProvider;
-import net.sourceforge.cilib.pso.velocityprovider.StandardVelocityProvider;
 import net.sourceforge.cilib.pso.particle.Particle;
+import net.sourceforge.cilib.pso.particle.MultiBehaviorParticle;
 import net.sourceforge.cilib.controlparameter.ControlParameter;
 import net.sourceforge.cilib.controlparameter.ConstantControlParameter;
 import net.sourceforge.cilib.measurement.Measurement;
@@ -32,20 +31,20 @@ public class ARPSOIterationStrategy extends SynchronousIterationStrategy {
     protected Measurement<Real> diversityMeasure;
     protected ControlParameter minDiversity;
     protected ControlParameter maxDiversity;
-    protected VelocityProvider attractionProvider;
-    protected VelocityProvider repulsionProvider;
 
     public ARPSOIterationStrategy() {
         attracting = true;
         diversityMeasure = new Diversity();
-        ((Diversity)diversityMeasure).setNormalisationParameter(new DiagonalSpaceNormalisation());
-        minDiversity = ConstantControlParameter.of(5e-1);
+        ((Diversity)diversityMeasure).setNormalisationParameter(
+            new DiagonalSpaceNormalisation());
+        minDiversity = ConstantControlParameter.of(5e-6);
         maxDiversity = ConstantControlParameter.of(0.25);
-        attractionProvider = new StandardVelocityProvider();
-        repulsionProvider = new StandardVelocityProvider(
-            ConstantControlParameter.of(0.729844),
-            ConstantControlParameter.of(-1.496180),
-            ConstantControlParameter.of(-1.496180));
+    }
+
+    public ARPSOIterationStrategy(ARPSOIterationStrategy copy) {
+        diversityMeasure = copy.diversityMeasure;
+        minDiversity = copy.minDiversity;
+        maxDiversity = copy.maxDiversity;
     }
 
     /**
@@ -53,7 +52,7 @@ public class ARPSOIterationStrategy extends SynchronousIterationStrategy {
      */
     @Override
     public ARPSOIterationStrategy getClone() {
-        return this;
+        return new ARPSOIterationStrategy(this);
     }
 
     /**
@@ -67,10 +66,8 @@ public class ARPSOIterationStrategy extends SynchronousIterationStrategy {
     @Override
     public void performIteration(PSO pso) {
         if (switchPhase(pso)) {
-            VelocityProvider vp = attracting ? attractionProvider : repulsionProvider;
-
             for (Particle current : pso.getTopology()) {
-                current.setVelocityProvider(vp);
+                ((MultiBehaviorParticle)current).nextBehavior();
             }
         }
         super.performIteration(pso);
@@ -94,5 +91,13 @@ public class ARPSOIterationStrategy extends SynchronousIterationStrategy {
             return true;
         }
         return false;
+    }
+
+    public void setMinDiversity(ControlParameter minDiversity) {
+        this.minDiversity = minDiversity;
+    }
+
+    public void setMaxDiversity(ControlParameter maxDiversity) {
+        this.maxDiversity = maxDiversity;
     }
 }

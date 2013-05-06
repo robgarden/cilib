@@ -7,9 +7,35 @@
 <simulator>
     <algorithms>
         <algorithm id="arpso" class="pso.PSO">
-            <addStoppingCondition class="stoppingcondition.MeasuredStoppingCondition">
+            <addStoppingCondition class="stoppingcondition.MeasuredStoppingCondition" target="400000">
+                <measurement class="measurement.single.FitnessEvaluations" />
             </addStoppingCondition>
-            <iterationStrategy class="pso.iterationstrategies.ARPSOIterationStrategy" />
+            <iterationStrategy class="pso.iterationstrategies.ARPSOIterationStrategy">
+                <minDiversity class="controlparameter.ConstantControlParameter" parameter="5e-6" />
+                <maxDiversity class="controlparameter.ConstantControlParameter" parameter="0.25" />
+            </iterationStrategy>
+            <initialisationStrategy class="algorithm.initialisation.ClonedPopulationInitialisationStrategy">
+                <entityType class="pso.particle.MultiBehaviorParticle">
+                    <addBehavior class="pso.particle.ParticleBehavior">
+                        <velocityProvider class="pso.velocityprovider.StandardVelocityProvider">
+                            <inertiaWeight class="controlparameter.LinearlyVaryingControlParameter">
+                                <initialValue value="1.0" />
+                                <finalValue value="0.0" />
+                            </inertiaWeight>
+                        </velocityProvider>
+                    </addBehavior>
+                    <addBehavior class="pso.particle.ParticleBehavior">
+                        <velocityProvider class="pso.velocityprovider.StandardVelocityProvider">
+                            <inertiaWeight class="controlparameter.LinearlyVaryingControlParameter">
+                                <initialValue value="1.0" />
+                                <finalValue value="0.0" />
+                            </inertiaWeight>
+                            <socialAcceleration class="controlparameter.ConstantControlParameter" parameter="-1.496180" />
+                            <cognitiveAcceleration class="controlparameter.ConstantControlParameter" parameter="-1.496180" />
+                        </velocityProvider>
+                    </addBehavior>
+                </entityType>
+            </initialisationStrategy>
         </algorithm>
     </algorithms>
     <problems>

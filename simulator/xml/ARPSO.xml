@@ -20,7 +20,7 @@
                         <velocityProvider class="pso.velocityprovider.StandardVelocityProvider">
                             <inertiaWeight class="controlparameter.LinearlyVaryingControlParameter">
                                 <initialValue value="1.0" />
-                                <finalValue value="0.0" />
+                                <finalValue value="0.1" />
                             </inertiaWeight>
                         </velocityProvider>
                     </addBehavior>
@@ -28,7 +28,7 @@
                         <velocityProvider class="pso.velocityprovider.StandardVelocityProvider">
                             <inertiaWeight class="controlparameter.LinearlyVaryingControlParameter">
                                 <initialValue value="1.0" />
-                                <finalValue value="0.0" />
+                                <finalValue value="0.1" />
                             </inertiaWeight>
                             <socialAcceleration class="controlparameter.ConstantControlParameter" parameter="-1.496180" />
                             <cognitiveAcceleration class="controlparameter.ConstantControlParameter" parameter="-1.496180" />
@@ -52,7 +52,7 @@
             <function class="functions.continuous.unconstrained.Rastrigin"/>
         </problem>
     </problems>
-    <measurements id="fitness" class="simulator.MeasurementSuite" resolution="10">
+    <measurements id="fitness" class="simulator.MeasurementSuite" resolution="1000">
         <addMeasurement class="measurement.single.Fitness"/>
     </measurements>
     <simulations>

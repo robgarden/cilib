@@ -6,10 +6,10 @@
  */
 package net.sourceforge.cilib.measurement.single.diversity;
 
-import java.util.Iterator;
 import net.sourceforge.cilib.algorithm.Algorithm;
 import net.sourceforge.cilib.algorithm.population.PopulationBasedAlgorithm;
 import net.sourceforge.cilib.entity.Entity;
+import net.sourceforge.cilib.entity.Topology;
 import net.sourceforge.cilib.measurement.Measurement;
 import net.sourceforge.cilib.measurement.single.diversity.centerinitialisationstrategies.CenterInitialisationStrategy;
 import net.sourceforge.cilib.measurement.single.diversity.centerinitialisationstrategies.SpatialCenterInitialisationStrategy;
@@ -51,19 +51,17 @@ public class Diversity implements Measurement<Real> {
     @Override
     public Real getValue(Algorithm algorithm) {
         PopulationBasedAlgorithm populationBasedAlgorithm = (PopulationBasedAlgorithm) algorithm;
-        int numberOfEntities = populationBasedAlgorithm.getTopology().size();
 
-        Vector center = populationCenter.getCenter(populationBasedAlgorithm.getTopology());
-        Iterator<? extends Entity> populationIterator = populationBasedAlgorithm.getTopology().iterator();
-
+        Topology<? extends Entity> topology = populationBasedAlgorithm.getTopology();
+        Vector center = populationCenter.getCenter(topology);
         double distanceSum = 0.0;
 
-        while (populationIterator.hasNext()) {
-            Vector currentEntityPosition = (Vector) (((Entity) populationIterator.next()).getCandidateSolution());
-            distanceSum += distanceMeasure.distance(center, currentEntityPosition);
+        for (Entity entity : topology) {
+            Vector solution = (Vector) entity.getCandidateSolution();
+            distanceSum += distanceMeasure.distance(center, solution);
         }
 
-        distanceSum /= numberOfEntities;
+        distanceSum /= topology.size();
         distanceSum /= normalisationParameter.getNormalisationParameter(populationBasedAlgorithm);
 
         return Real.valueOf(distanceSum);

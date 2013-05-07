@@ -14,7 +14,8 @@ import net.sourceforge.cilib.type.types.container.StructuredType;
 import net.sourceforge.cilib.type.types.Numeric;
 
 /**
- * Normalisation based on the diagonal of the {@link Problem} search space.
+ * Normalisation based on the longest diagonal of the {@link Problem} search
+ * space.
  */
 public class DiagonalSpaceNormalisation implements DiversityNormalisation {
 
@@ -27,12 +28,13 @@ public class DiagonalSpaceNormalisation implements DiversityNormalisation {
         DomainRegistry dr = problem.getDomain();
         StructuredType<Numeric> domain = dr.getBuiltRepresentation();
 
-        double distance = 0;
+        double longestDiagonal = Double.MIN_VALUE;
 
         for (Numeric n : domain) {
-            distance += Math.pow(n.getBounds().getRange(), 2);
+            double range = n.getBounds().getRange();
+            longestDiagonal = Math.max(longestDiagonal, range);
         }
 
-        return Math.sqrt(distance);
+        return longestDiagonal;
     }
 }

@@ -17,13 +17,14 @@ import net.sourceforge.cilib.problem.solution.Fitness;
 import net.sourceforge.cilib.problem.solution.InferiorFitness;
 import net.sourceforge.cilib.type.types.Int;
 import net.sourceforge.cilib.type.types.container.Vector;
+import net.sourceforge.cilib.pso.velocityprovider.StandardVelocityProvider;
 
 /**
  *
  */
 public class MultiBehaviorParticle extends StandardParticle {
     protected List<ParticleBehavior> behaviors;
-    protected int currentBehavior;
+    protected Iterator<ParticleBehavior> behaviorIterator;
 
     /** Creates a new instance of MultiBehaviorParticle. */
     public MultiBehaviorParticle() {
@@ -38,7 +39,7 @@ public class MultiBehaviorParticle extends StandardParticle {
     public MultiBehaviorParticle(MultiBehaviorParticle copy) {
         super(copy);
         behaviors = copy.behaviors;
-        currentBehavior = copy.currentBehavior;
+        behaviorIterator = copy.behaviorIterator;
     }
 
     /**
@@ -51,16 +52,14 @@ public class MultiBehaviorParticle extends StandardParticle {
 
     public void addBehavior(ParticleBehavior behavior) {
         behaviors.add(behavior);
+        behaviorIterator = Iterables.cycle(behaviors).iterator();
+        this.behavior = behaviorIterator.next();
     }
 
     public void nextBehavior() {
         Preconditions.checkState(!behaviors.isEmpty(),
             "The list of particle behaviors cannot be empty.");
 
-        currentBehavior++;
-        if (currentBehavior == behaviors.size()) {
-            currentBehavior = 0;
-        }
-        behavior = behaviors.get(currentBehavior);
+        behavior = behaviorIterator.next();
     }
 }

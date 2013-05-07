@@ -6,6 +6,8 @@
  */
 package net.sourceforge.cilib.pso.iterationstrategies;
 
+import net.sourceforge.cilib.algorithm.population.AbstractIterationStrategy;
+import net.sourceforge.cilib.algorithm.population.IterationStrategy;
 import net.sourceforge.cilib.entity.Topology;
 import net.sourceforge.cilib.pso.PSO;
 import net.sourceforge.cilib.pso.particle.Particle;
@@ -26,13 +28,15 @@ import net.sourceforge.cilib.type.types.Real;
  * the ARPSO." Deptartment of Computer Science, University of Aarhus, Aarhus,
  * Denmark, Tech. Rep 2 (2002): 2002.
  */
-public class ARPSOIterationStrategy extends SynchronousIterationStrategy {
+public class ARPSOIterationStrategy extends AbstractIterationStrategy<PSO> {
+    protected IterationStrategy<PSO> delegate;
     protected boolean attracting;
     protected Measurement<Real> diversityMeasure;
     protected ControlParameter minDiversity;
     protected ControlParameter maxDiversity;
 
     public ARPSOIterationStrategy() {
+        delegate = new SynchronousIterationStrategy();
         attracting = true;
         diversityMeasure = new Diversity();
         ((Diversity)diversityMeasure).setNormalisationParameter(
@@ -42,9 +46,10 @@ public class ARPSOIterationStrategy extends SynchronousIterationStrategy {
     }
 
     public ARPSOIterationStrategy(ARPSOIterationStrategy copy) {
-        diversityMeasure = copy.diversityMeasure;
-        minDiversity = copy.minDiversity;
-        maxDiversity = copy.maxDiversity;
+        delegate = copy.delegate.getClone();
+        diversityMeasure = copy.diversityMeasure.getClone();
+        minDiversity = copy.minDiversity.getClone();
+        maxDiversity = copy.maxDiversity.getClone();
     }
 
     /**
@@ -56,7 +61,7 @@ public class ARPSOIterationStrategy extends SynchronousIterationStrategy {
     }
 
     /**
-     * Before performing the {@link SynchronousIterationStrategy}, determine
+     * Before performing the delegate's {@link #performIteration}, determine
      * which phase the algorithm is currently in (attraction/repulsion) by
      * examining the diversity of the swarm. If there is a phase change, update
      * the {@link VelocityProvider}s of each {@link Particle} accordingly.
@@ -70,7 +75,7 @@ public class ARPSOIterationStrategy extends SynchronousIterationStrategy {
                 ((MultiBehaviorParticle)current).nextBehavior();
             }
         }
-        super.performIteration(pso);
+        delegate.performIteration(pso);
     }
 
     /**
@@ -83,11 +88,10 @@ public class ARPSOIterationStrategy extends SynchronousIterationStrategy {
      */
     private boolean switchPhase(PSO pso) {
         double diversity = diversityMeasure.getValue(pso).doubleValue();
-        if (attracting && diversity < minDiversity.getParameter()) {
-            attracting = false;
-            return true;
-        } else if (!attracting && diversity > maxDiversity.getParameter()) {
-            attracting = true;
+        if ((attracting && diversity < minDiversity.getParameter())
+            || (!attracting && diversity > maxDiversity.getParameter())) {
+
+            attracting = !attracting;
             return true;
         }
         return false;

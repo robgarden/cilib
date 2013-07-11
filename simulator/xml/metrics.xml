@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<!DOCTYPE simulator [
+<!ATTLIST algorithm id ID #IMPLIED>
+<!ATTLIST problem id ID #IMPLIED>
+<!ATTLIST measurements id ID #IMPLIED>
+]>
+<simulator>
+    <algorithms>
+        <algorithm id="sample" class="pso.PSO">
+            <addStoppingCondition class="stoppingcondition.MeasuredStoppingCondition" target="1" />
+            <iterationStrategy class="algorithm.population.NullIterationStrategy" />
+            <initialisationStrategy class="algorithm.initialisation.ClonedPopulationInitialisationStrategy">
+                <entityNumber value="1000" />
+                <entityType class="pso.particle.StandardParticle">
+                    <positionInitialisationStrategy class="entity.initialisation.walks.ProgressiveRandomWalk">
+                        <stepSize class="controlparameter.DomainProportionalControlParameter" proportion="0.1" />
+                    </positionInitialisationStrategy>
+                </entityType>
+            </initialisationStrategy>
+        </algorithm>
+    </algorithms>
+
+    <problems>
+        <problem id="spherical" class="problem.FunctionOptimisationProblem" domain="R(-100:100)^1">
+            <function class="functions.continuous.unconstrained.Spherical"/>
+        </problem>
+    </problems>
+
+    <measurements id="fitness" class="simulator.MeasurementSuite" resolution="10">
+        <addMeasurement class="measurement.functionmetric.FEM"/>
+    </measurements>
+
+    <simulations>
+        <simulation samples="1">
+            <algorithm idref="sample"/>
+            <problem idref="spherical"/>
+            <measurements idref="fitness" />
+	    <output format="TXT" file="data/sampling.spherical.txt" />
+        </simulation>
+    </simulations>
+</simulator>

@@ -22,7 +22,7 @@ import scala.collection.JavaConversions;
  * Dispersion function metric: Estimate presence of funnels
  */
 public class ScalaFunctionMetricWrapper implements Measurement<Real> {
-    protected FDCSearchability metric;
+    protected ScalaFunctionMetric metric;
 
     /**
      * {@inheritDoc}
@@ -52,11 +52,18 @@ public class ScalaFunctionMetricWrapper implements Measurement<Real> {
             }
         });
 
-        return Real.valueOf(metric.apply(
-          JavaConversions.asScalaIterator(points.iterator())));
+        scala.collection.Iterator iter = 
+            JavaConversions.asScalaIterator(points.iterator());
+
+        return Real.valueOf(metric.apply(iter.toList()));
     }
 
-    public void setMetric(FDCSearchability metric) {
+    public void setMetric(ScalaFunctionMetric metric) {
       this.metric = metric;
+    }
+
+    @Override
+    public String toString() {
+      return metric.toString();
     }
 }

@@ -7,6 +7,6 @@
  */
 package net.sourceforge.cilib.measurement.functionmetric
 
-trait FunctionMetric {
-  def apply(points: Iterator[Point]): Double
+trait ScalaFunctionMetric {
+  def apply(points: List[Point]): Double
 }

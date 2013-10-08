@@ -53,6 +53,15 @@
                 </entityType>
             </initialisationStrategy>
         </algorithm>
+
+        <algorithm id="fdc" class="pso.PSO">
+            <addStoppingCondition class="stoppingcondition.MeasuredStoppingCondition" target="1" />
+            <iterationStrategy class="algorithm.population.NullIterationStrategy" />
+            <initialisationStrategy class="algorithm.initialisation.ClonedPopulationInitialisationStrategy">
+                <entityNumber value="1000" />
+                <entityType class="pso.particle.StandardParticle" />
+            </initialisationStrategy>
+        </algorithm>
     </algorithms>
 
     <problems>
@@ -81,8 +90,14 @@
         </addMeasurement>
     </measurements>
 
+    <measurements id="fdc-measurement" class="simulator.MeasurementSuite" resolution="10">
+        <addMeasurement class="measurement.functionmetric.ScalaFunctionMetricWrapper">
+            <setMetric class="measurement.functionmetric.FDCSearchability" />
+        </addMeasurement>
+    </measurements>
+
     <simulations>
-        <simulation samples="30">
+        <!-- <simulation samples="30">
             <algorithm idref="fem-micro"/>
             <problem idref="ackley"/>
             <measurements idref="fem" />
@@ -111,6 +126,12 @@
             <problem idref="ackley"/>
             <measurements idref="gdev" />
             <output format="TXT" file="data/gdev-ackley.txt"/>
+        </simulation> -->
+        <simulation samples="30">
+            <algorithm idref="fdc" />
+            <problem idref="ackley"/>
+            <measurements idref="fdc-measurement" />
+            <output format="TXT" file="data/fdc-ackley.txt"/>
         </simulation>
     </simulations>
 </simulator>

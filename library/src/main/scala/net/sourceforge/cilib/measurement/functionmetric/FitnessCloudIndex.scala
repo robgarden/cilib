@@ -14,6 +14,8 @@ import net.sourceforge.cilib.`type`.types.container.StructuredType;
 /**
  * Fitness Cloud Index
  *
+ * [0, 1]: indicating the proportion of fitness improving solutions after two
+ * PSO updates.
  */
 class FitnessCloudIndex extends ScalaFunctionMetric {
   // pso parameters
@@ -24,55 +26,71 @@ class FitnessCloudIndex extends ScalaFunctionMetric {
   // type 1 = cog
   // tyoe 2 = soc
   var updateType = 1
+  var hasSetup = false
 
-  // get 10% of domain range
   val domainRangeParameter = new DomainProportionalControlParameter()
-  domainRangeParameter.setProportion(0.1)
+  var scalaFunc: ScalaFunctionWrapper = null
+  var buildRep: StructuredType[Numeric] = Vector.of(0.0)
+  var ranges: Array[Bounds] = Array()
+  var gaussian: GaussianDistribution = new GaussianDistribution()
 
-  // get domain ranges
-  val buildRep: StructuredType[Numeric] = AbstractAlgorithm.get().getOptimisationProblem()
-    .getDomain().getBuiltRepresentation() match {
-      case a: StructuredType[Numeric] => a
+  def setup {
+    // get 10% of domain range
+    domainRangeParameter.setProportion(0.1)
+
+    // get domain ranges
+    buildRep = AbstractAlgorithm.get().getOptimisationProblem()
+      .getDomain().getBuiltRepresentation() match {
+        case a: StructuredType[Numeric] => a
+        case _ => throw new UnsupportedOperationException
+      }
+
+    ranges = Array.fill(buildRep.size)(new Bounds(0, 0))
+    var i = 0
+    val iter: java.util.Iterator[Numeric] = buildRep.iterator
+    while (iter.hasNext) {
+      val n = iter.next
+      ranges(i) = n.getBounds()
+      i = i + 1
+    }
+
+    // set gaussian distribution deviation to 10% domain range
+    gaussian.setDeviation(domainRangeParameter)
+
+    // get function
+    val problem = AbstractAlgorithm.get().getOptimisationProblem
+    val func = problem match {
+      case fop: FunctionOptimisationProblem => fop.getFunction() match {
+        case dfunc: F[Vector, Double] => dfunc
+        case _ => throw new UnsupportedOperationException
+      }
       case _ => throw new UnsupportedOperationException
     }
 
-  val ranges: Array[Bounds] = Array.fill(buildRep.size)(new Bounds(0, 0))
-  var i = 0
-  val iter: java.util.Iterator[Numeric] = buildRep.iterator
-  while (iter.hasNext) {
-    val n = iter.next
-    ranges(i) = n.getBounds()
-    i = i + 1
+    scalaFunc = new ScalaFunctionWrapper(func)
   }
-
-  // set gaussian distribution deviation to 10% domain range
-  val gaussian = new GaussianDistribution()
-  gaussian.setDeviation(domainRangeParameter)
-
-  // get function
-  val problem = AbstractAlgorithm.get().getOptimisationProblem
-  val func = problem match {
-    case fop: FunctionOptimisationProblem => fop.getFunction() match {
-      case dfunc: F[Vector, Double] => dfunc
-      case _ => throw new UnsupportedOperationException
-    }
-    case _ => throw new UnsupportedOperationException
-  }
-  val scalaFunc = new ScalaFunctionWrapper(func)
 
   def generatePBests(particles: List[Particle]): List[Particle] = {
     particles map { p =>
-      val z = p.curr.x.map { xi =>
-        xi + gaussian.getRandomNumber
+      val zi = p.curr.x.zip(ranges).map {
+        case (xi: Double, b: Bounds) => {
+          var zi = xi + gaussian.getRandomNumber
+          while (!b.isInsideBounds(zi)) {
+            zi = xi + gaussian.getRandomNumber
+          }
+          zi
+        }
       }
 
-      val newPoint = new Point(z, scalaFunc(z))
-      updatePBest(Particle(newPoint, p.curr))
+      val z = new Point(zi, scalaFunc(zi))
+
+      if (z.fitness < p.curr.fitness) Particle(p.curr, z)
+      else Particle(z, p.curr)
     }
   }
 
   def updatePosition(particles: List[Particle]): List[Particle] = {
-    particles map { p =>
+    val updated = particles map { p =>
       val newPosition = p.curr.x.zip(p.velocity).map {
         case (x, v) =>
           x + v
@@ -80,6 +98,8 @@ class FitnessCloudIndex extends ScalaFunctionMetric {
       val newPoint = Point(newPosition, scalaFunc(newPosition))
       Particle(newPoint, p.pbest, p.velocity)
     }
+
+    repair(updated)
   }
 
   def updateVelocity(particles: List[Particle]): List[Particle] = {
@@ -107,33 +127,68 @@ class FitnessCloudIndex extends ScalaFunctionMetric {
     val velocity = (for {
       i <- 0 until particle.velocity.size
       velTerm = particle.velocity(i) * inertia
-      socTerm = c1 * Rand.nextDouble * (gbest.pbest.x(i) - particle.curr.x(i))
+      socTerm = c2 * Rand.nextDouble * (gbest.pbest.x(i) - particle.curr.x(i))
     } yield velTerm + socTerm).toArray
 
     Particle(particle.curr, particle.pbest, velocity)
   }
 
-  def updatePBest(particle: Particle): Particle = {
-    if (particle.curr.fitness < particle.pbest.fitness && withinBounds(particle.curr))
-      Particle(particle.curr, particle.curr)
-    else
-      particle
+  def updatePBest(particles: List[Particle]): List[Particle] = {
+    particles map { p =>
+      if (p.curr.fitness < p.pbest.fitness)
+        Particle(p.curr, p.curr, p.velocity)
+      else
+        p
+    }
   }
 
-  def withinBounds(point: Point): Boolean = {
-    point.x.zip(ranges) forall {
-      case (xi: Double, b: Bounds) =>
-        b.isInsideBounds(xi)
+  def repair(particles: List[Particle]): List[Particle] = {
+    particles map { p =>
+      val repairedCurrX = p.curr.x.zip(ranges) map {
+        case (xi: Double, b: Bounds) =>
+          if (b.isInsideBounds(xi)) {
+            xi
+          } else {
+            if (xi < b.getLowerBound) b.getLowerBound()
+            else b.getUpperBound()
+          }
+      }
+      val repairedCurr = Point(repairedCurrX, scalaFunc(repairedCurrX))
+      Particle(repairedCurr, p.pbest, p.velocity)
     }
   }
 
   def setUpdateType(x: Int) = updateType = x
 
   def apply(points: List[Point]): Double = {
-    val p0 = generatePBests(points map (Particle(_)))
-    val yhat0: Double = p0.map(_.pbest.fitness).sorted.head
+    if (!hasSetup) {
+      setup
+      hasSetup = true
+    }
 
-    val p1 = updatePosition(updateVelocity(p0))
-    1.0
+    val p0 = generatePBests(points map (Particle(_)))
+    val p1 = updatePBest(updatePosition(updateVelocity(p0)))
+    val p2 = updatePosition(updateVelocity(p1))
+
+    val p0Fitness = p0.map(_.curr.fitness)
+    val p2Fitness = p2.map(_.curr.fitness)
+
+    val fitnesses = p0Fitness ++ p2Fitness
+    // we switch them around here
+    val max: Double = fitnesses.min
+    val min: Double = fitnesses.max
+
+    val results: List[(Double, Double)] = p0Fitness.zip(p2Fitness).map {
+      case (o: Double, n: Double) => {
+        val on = normalise(o, min, max)
+        val nn = normalise(n, min, max)
+        // println(s"${on}, ${nn}")
+        (on, nn)
+      }
+    }
+
+    results.filter(r => r._2 > r._1).size.toDouble / results.size
   }
+
+  def normalise(x: Double, min: Double, max: Double) = (x - min) / (max - min)
 }

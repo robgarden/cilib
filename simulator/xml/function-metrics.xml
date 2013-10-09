@@ -62,6 +62,15 @@
                 <entityType class="pso.particle.StandardParticle" />
             </initialisationStrategy>
         </algorithm>
+
+        <algorithm id="fci" class="pso.PSO">
+            <addStoppingCondition class="stoppingcondition.MeasuredStoppingCondition" target="1" />
+            <iterationStrategy class="algorithm.population.NullIterationStrategy" />
+            <initialisationStrategy class="algorithm.initialisation.ClonedPopulationInitialisationStrategy">
+                <entityNumber value="1000" />
+                <entityType class="pso.particle.StandardParticle" />
+            </initialisationStrategy>
+        </algorithm>
     </algorithms>
 
     <problems>
@@ -96,8 +105,20 @@
         </addMeasurement>
     </measurements>
 
+    <measurements id="fcicog" class="simulator.MeasurementSuite" resolution="10">
+        <addMeasurement class="measurement.functionmetric.ScalaFunctionMetricWrapper">
+            <setMetric class="measurement.functionmetric.FitnessCloudIndex" updateType="1" />
+        </addMeasurement>
+    </measurements>
+
+    <measurements id="fcisoc" class="simulator.MeasurementSuite" resolution="10">
+        <addMeasurement class="measurement.functionmetric.ScalaFunctionMetricWrapper">
+            <setMetric class="measurement.functionmetric.FitnessCloudIndex" updateType="2" />
+        </addMeasurement>
+    </measurements>
+
     <simulations>
-        <!-- <simulation samples="30">
+        <simulation samples="30">
             <algorithm idref="fem-micro"/>
             <problem idref="ackley"/>
             <measurements idref="fem" />
@@ -126,12 +147,30 @@
             <problem idref="ackley"/>
             <measurements idref="gdev" />
             <output format="TXT" file="data/gdev-ackley.txt"/>
-        </simulation> -->
+        </simulation>
         <simulation samples="30">
             <algorithm idref="fdc" />
             <problem idref="ackley"/>
             <measurements idref="fdc-measurement" />
             <output format="TXT" file="data/fdc-ackley.txt"/>
+        </simulation>
+         <simulation samples="1">
+            <algorithm idref="fci" />
+            <problem idref="ackley"/>
+            <measurements idref="fcicog" />
+            <output format="TXT" file="data/fcicog-ackley.txt"/>
+        </simulation>
+         <simulation samples="30">
+            <algorithm idref="fci" />
+            <problem idref="ackley"/>
+            <measurements idref="fcicog" />
+            <output format="TXT" file="data/fcicog-ackley.txt"/>
+        </simulation>
+        <simulation samples="30">
+            <algorithm idref="fci" />
+            <problem idref="ackley"/>
+            <measurements idref="fcisoc" />
+            <output format="TXT" file="data/fcisoc-ackley.txt"/>
         </simulation>
     </simulations>
 </simulator>

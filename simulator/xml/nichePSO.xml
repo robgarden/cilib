@@ -106,12 +106,9 @@
         </problem>
     </problems>
 
-    <measurements id="fitness" class="simulator.MeasurementSuite" resolution="1">
-        <addMeasurement class="measurement.single.SwarmSize"/>
-        <addMeasurement class="measurement.multiple.CompositeMeasurement">
-            <addMeasurement class="measurement.single.SwarmSize"/>
-            <addMeasurement class="measurement.single.Solution"/>
-        </addMeasurement>
+    <measurements id="fitness" class="simulator.MeasurementSuite" resolution="10">
+        <addMeasurement class="measurement.multiple.MultipleSolutions"/>
+        <addMeasurement class="measurement.multiple.MultipleFitness"/>
     </measurements>
 
     <simulations>
@@ -146,7 +143,7 @@
             <output format="TXT" file="data/nichePSO-f5.txt"/>
         </simulation>
 
-        <simulation samples="1">
+        <!-- <simulation samples="1">
             <algorithm idref="nichePSO">
                 <mainSwarmMerger class="niching.merging.ScatterMergeStrategy"/>
                 <subSwarmMerger class="niching.merging.SingleSwarmMergeStrategy"/>
@@ -398,6 +395,6 @@
             <problem idref="f5"/>
             <measurements idref="fitness" />
             <output format="TXT" file="data/nichePSO-diversity-absorption-f5.txt"/>
-        </simulation>
+        </simulation> -->
     </simulations>
 </simulator>

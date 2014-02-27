@@ -5,6 +5,8 @@ import syntax.state._
 import syntax.applicative._
 import syntax.std.option._
 import scalaz.Free._
+import spire.math._
+import spire.implicits._
 
 final class RVar[+A](val state: StateT[Trampoline, RNG, A]) {
   import Trampoline._
@@ -189,8 +191,8 @@ object Dist {
         (rng1, (x, y1 + (y0 - y1) * uni))
       } else {
         val (rng1, (a, b)) = uniformPair.run(rng).run
-        val x1 = PARAM_R - math.log(1.0 - a) / PARAM_R
-        val y1 = math.exp(-PARAM_R * (x - 0.5 * PARAM_R)) * b
+        val x1 = PARAM_R - log(1.0 - a) / PARAM_R
+        val y1 = exp(-PARAM_R * (x - 0.5 * PARAM_R)) * b
         (rng1, (x1, y1))
       }
     }
@@ -208,7 +210,7 @@ object Dist {
       if (j >= ktab(i)) {
         val (rng2, (x1, y1)) = update(x, y, i)(rng1)
 
-        if (y1 < math.exp(-0.5 * x1 * x1)) {
+        if (y1 < exp(-0.5 * x1 * x1)) {
           done((rng2, if (sign != 0) x1 else -x1))
         } else suspend(inner(y1).run(rng2))
       } else done((rng1, if (sign != 0) x else -x))
@@ -218,13 +220,13 @@ object Dist {
   })
 
   def cauchy(l: Double, s: Double) =
-    stdUniform map { x => l + s * math.tan(math.Pi * (x - 0.5)) }
+    stdUniform map { x => l + s * tan(pi * (x - 0.5)) }
 
   def gamma(k: Double, theta: Double) = {
     import Scalaz._
 
     val n = k.toInt
-    val gammaInt = (stdUniform replicateM n).map(_.foldMap(x => -math.log(x)))
+    val gammaInt = (stdUniform replicateM n).map(_.foldMap(x => -log(x)))
     val gammaFrac = {
       val delta = k - n
 
@@ -234,18 +236,18 @@ object Dist {
           u2 <- stdUniform
           u3 <- stdUniform
           (zeta, eta) = {
-            val v0 = math.E / (math.E + delta)
+            val v0 = e / (e + delta)
             if (u1 <= v0) {
-              val zeta = math.pow(u2, 1.0 / delta)
-              val eta = u3 * math.pow(zeta, delta - 1)
+              val zeta = pow(u2, 1.0 / delta)
+              val eta = u3 * pow(zeta, delta - 1)
               (zeta, eta)
             } else {
-              val zeta = 1 - math.log(u2)
-              val eta = u3 * math.exp(-zeta)
+              val zeta = 1 - log(u2)
+              val eta = u3 * exp(-zeta)
               (zeta, eta)
             }
           }
-          r <- if (eta > math.pow(zeta, delta - 1) * math.exp(-zeta)) inner else RVar.point(zeta)
+          r <- if (eta > pow(zeta, delta - 1) * exp(-zeta)) inner else RVar.point(zeta)
         } yield r
 
       inner
@@ -258,16 +260,16 @@ object Dist {
   }
 
   def exponential(l: Option[Double @@ Positive]) =
-    l.cata(x => stdUniform map { math.log(_) / x }, RVar.point(0.0))
+    l.cata(x => stdUniform map { log(_) / x }, RVar.point(0.0))
 
   def laplace(b0: Double, b1: Double) =
     stdUniform map { x =>
       val rr = x - 0.5
-      b0 - b1 * (math.log(1 - 2 * rr.abs)) * rr.signum
+      b0 - b1 * (log(1 - 2 * rr.abs)) * rr.signum
     }
 
   def lognormal(mean: Double, dev: Double) =
-    stdNormal map (x => math.exp(mean + dev * x))
+    stdNormal map (x => exp(mean + dev * x))
 
   import Scalaz._
   def dirichlet(alphas: List[Double]) =

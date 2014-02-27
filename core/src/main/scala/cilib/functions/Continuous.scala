@@ -4,23 +4,31 @@ import spire.implicits._
 import spire.math._
 
 import cilib.Solution
+import cilib.math._
 
 trait ContinuousFunction {
 	def apply(x: Solution): Double
 }
 
-object AbsoluteValue extends ContinuousFunction {
+trait Differentiable {
+	def f(x: Dual): Dual
+	def gradient(x: Solution) = x.map(f(_).d)
+}
+
+object AbsoluteValue extends ContinuousFunction with Differentiable {
+	def f(x: Dual) = absD(x)
 	def apply(x: Solution) = x.map(abs(_)).sum
 }
 
 object Rosenbrock extends ContinuousFunction {
-	def apply(x: Solution) = x.sliding(2).map { 
-			case Vector(xi, xi1) => (1 - xi) ** 2 + (100 * (xi1 - xi ** 2)) ** 2 
+	def apply(x: Solution) = x.sliding(2).map {
+			case Vector(xi, xi1) => (1 - xi) ** 2 + (100 * (xi1 - xi ** 2)) ** 2
 	}.sum
 }
 
-object Rastrigin extends ContinuousFunction {
-	def apply(x: Solution) = 10 * x.size + x.map(xi => xi ** 2 - 10 * cos(2 * pi * xi)).sum
+object Rastrigin extends ContinuousFunction with Differentiable {
+	def f(x: Dual) = x ** 2 - 10 * cos(2 * pi * x)
+	def apply(x: Solution) = 10 * x.size + x.map(f(_).r).sum
 }
 
 object Salomon extends ContinuousFunction {
@@ -30,8 +38,9 @@ object Salomon extends ContinuousFunction {
 	}
 }
 
-object Sphere extends ContinuousFunction {
-	def apply(x: Solution) = x.map(_ ** 2).sum
+object Sphere extends ContinuousFunction with Differentiable {
+	def f(x: Dual) = x ** 2
+	def apply(x: Solution) = x.map(f(_).r).sum
 }
 
 object Step extends ContinuousFunction {

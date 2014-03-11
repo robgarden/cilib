@@ -23,7 +23,7 @@ class PlottableFunction(f: ContinuousFunction) {
 			w.close
 
 			val gnuplot = "\"set terminal png; set output '/var/tmp/points.png';" +
-			"set title ''; plot '/var/tmp/points.txt' w lp;\""
+			"set title ''; plot '/var/tmp/points.txt' w l;\""
 
 			Seq("bash", "-c", "gnuplot -e " + gnuplot)!!
 
@@ -44,7 +44,7 @@ class PlottableDifferentiableFunction(f: Differentiable) {
 			w.close
 
 			val gnuplot = "\"set terminal png; set output '/var/tmp/pointsG.png';" +
-			"set title ''; plot '/var/tmp/pointsG.txt' w lp lt rgb 'blue';\""
+			"set title ''; plot '/var/tmp/pointsG.txt' w l lt rgb 'blue';\""
 
 			Seq("bash", "-c", "gnuplot -e " + gnuplot)!!
 

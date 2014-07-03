@@ -37,6 +37,11 @@ import fj.F;
  * R(-5.12, 5.12)^30
  *
  */
+
+/*
+asdasdasdasda
+*/
+
 public class Spherical extends ContinuousFunction implements Differentiable {
 
     private static final long serialVersionUID = 5811377575647995206L;

@@ -2,6 +2,7 @@ package cilib
 package example
 
 import cilib.Defaults._
+import cilib.Functions
 
 import scalaz.std.list._
 import spire.implicits._
@@ -9,7 +10,7 @@ import spire.implicits._
 object LBestPSO {
 
   def main(args: Array[String]): Unit = {
-    val sum = Problems.spherical[List,Double]
+    val sum = Problem.static((a: List[Double]) => Functions.spherical(a).map(Valid(_)))
 
     // LBest is a network topology where every Paricle 'x' has (n/2) neighbours
     // on each side. For example, a neighbourhood size of 3 means that there is

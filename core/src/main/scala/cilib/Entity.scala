@@ -4,6 +4,8 @@ import scala.language.higherKinds
 import _root_.scala.Predef.{any2stringadd => _, _}
 import scalaz._
 import Scalaz._
+import spire.math.{ Interval => _, _ }
+import spire.implicits._
 
 import spire.math._
 
@@ -134,15 +136,28 @@ sealed trait Bound[A] {
 case class Closed[A](value: A) extends Bound[A]
 case class Open[A](value: A) extends Bound[A]
 
-final class Interval[A] private[cilib] (val lower: Bound[A], val upper: Bound[A]) {
+final case class Interval[A: Numeric] (val lower: Bound[A], val upper: Bound[A]) {
 
   def ^(n: Int): List[Interval[A]] =
     (1 to n).map(_ => this).toList
 
+  def contains(x: A) = this match {
+    case Interval(Open(a),   Closed(b)) => (x > lower.value)  && (x <= upper.value)
+    case Interval(Open(a),   Open(b))   => (x > lower.value)  && (x < upper.value)
+    case Interval(Closed(a), Closed(b)) => (x >= lower.value) && (x <= upper.value)
+    case Interval(Closed(a), Open(b))   => (x >= lower.value) && (x < upper.value)
+  }
+
 }
 
 object Interval {
-  def apply[A](lower: Bound[A], upper: Bound[A]) =
-    new Interval(lower, upper)
+
+  implicit class valueIntervalOps[A](x: A) {
+    def in(i: Interval[A]) = i.contains(x)
+  }
+
+  implicit class containerIntervalOps[A](x: Seq[A]) {
+    def in(i: Interval[A]) = !x.isEmpty && x.forall(i.contains(_))
+  }
 
 }

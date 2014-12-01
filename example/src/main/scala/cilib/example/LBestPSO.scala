@@ -7,6 +7,8 @@ import cilib.Functions
 import scalaz.std.list._
 import spire.implicits._
 
+import spire.implicits._
+
 object LBestPSO {
 
   def main(args: Array[String]): Unit = {

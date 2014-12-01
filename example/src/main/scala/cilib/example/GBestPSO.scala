@@ -6,6 +6,8 @@ import cilib.Defaults._
 import scalaz.std.list._
 import spire.implicits._
 
+import spire.implicits._
+
 object GBestPSO {
 
   def main(args: Array[String]): Unit = {

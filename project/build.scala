@@ -132,9 +132,11 @@ object CIlibBuild extends Build {
     name := "cilib",
     resolvers += Resolver.sonatypeRepo("releases"),
     libraryDependencies ++= Seq(
-      "org.scalaz"                  %% "scalaz-core"   % "7.1.0",
-      "org.spire-math"              %% "spire"         % "0.7.5",
-      "com.github.julien-truffaut"  %% "monocle-core"  % "0.5.1"
+      "org.scalaz"                  %% "scalaz-core"    % "7.1.0",
+      "org.spire-math"              %% "spire"          % "0.8.2",
+      "com.github.julien-truffaut"  %% "monocle-core"   % "0.5.1",
+      "org.scalanlp"                %% "breeze"         % "0.8.1",
+      "org.scalanlp"                %% "breeze-natives" % "0.8.1"
     )
   ) ++ buildSettings
 

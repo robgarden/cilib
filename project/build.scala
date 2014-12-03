@@ -167,6 +167,8 @@ object CIlibBuild extends Build {
       //"org.typelevel"               %% "scalaz-spire"  % "0.2",
       "org.spire-math"              %% "spire"         % "0.9.0",
       "com.github.julien-truffaut"  %% "monocle-core"  % "1.0.1"
+      //"org.scalanlp"                %% "breeze"         % "0.8.1",
+      //"org.scalanlp"                %% "breeze-natives" % "0.8.1"
     )
     //wartremoverErrors ++= Warts.all
   ) ++ buildSettings

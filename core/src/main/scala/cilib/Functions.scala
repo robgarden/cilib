@@ -6,6 +6,8 @@ import spire.math._
 import spire.algebra._
 import spire.implicits._
 
+import breeze.linalg._
+
 object Functions {
 
   def absoluteValue[T: Field : Signed](x: List[T]) = Some(x.map(abs(_)).qsum)
@@ -282,7 +284,7 @@ object Functions {
     case _          => None
   }
 
-  def spherical[T: Field](x: List[T]) = Some(x.map(_ ** 2).qsum)
+  def spherical[T: Field](x: Seq[T]) = Some(x.map(_ ** 2).qsum)
 
   def step[T: Field : IsReal](x: List[T]) =
     Some(x.map(xi => (floor(xi) + 0.5) ** 2).qsum)
@@ -334,5 +336,10 @@ object FunctionWrappers {
 
   def shifted[T: Ring](f: (List[T]) => Option[T], horizontal: T, vertical: T) =
     (x: List[T]) => f(x.map(_ - horizontal)).map(_ - vertical)
+
+  def rotated(f: (Seq[Double]) => Option[Double], dim: Int) = {
+    val rotation = qr.justQ(DenseMatrix.rand(dim, dim))
+    (x: Seq[Double]) => f((rotation * DenseVector(x.toArray)).toArray)
+  }
 
 }

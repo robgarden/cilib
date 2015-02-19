@@ -10,9 +10,9 @@ import breeze.linalg._
 
 object Functions {
 
-  def absoluteValue[T: Field : Signed](x: List[T]) = Some(x.map(abs(_)).qsum)
+  def absoluteValue[T: Field : Signed](x: Seq[T]) = Some(x.map(abs(_)).qsum)
 
-  def ackley[T: Field : IsReal : NRoot : Trig](x: List[T]) = {
+  def ackley[T: Field : IsReal : NRoot : Trig](x: Seq[T]) = {
     val domain = Interval(Closed(-32.768), Closed(32.768))
     if (x in domain) {
       val n = x.length
@@ -23,13 +23,13 @@ object Functions {
     } else None
   }
 
-  def alpine[T: Field : Signed : Trig](x: List[T]) =
+  def alpine[T: Field : Signed : Trig](x: Seq[T]) =
     Some(x.map(xi => abs((xi * sin(xi)) + (0.1 * xi))).qsum)
 
-  def beale[T: Field : IsReal](x: List[T]) = {
+  def beale[T: Field : IsReal](x: Seq[T]) = {
     val domain = Interval(Closed(-4.5), Closed(4.5))
     x match {
-      case List(x1, x2) =>
+      case Seq(x1, x2) =>
         if (x in domain)
           Some((1.5 - x1 + x1 * x2) ** 2 +
                (2.25 - x1 + x1 * (x2 ** 2)) ** 2 +
@@ -39,23 +39,23 @@ object Functions {
     }
   }
 
-  def bentCigar[T: Field](x: List[T]) =
+  def bentCigar[T: Field](x: Seq[T]) =
     if (x.length >= 2)
       Some(x.head ** 2 + 10 ** 6 * x.tail.map(_ ** 2).qsum)
     else None
 
-  def bird[T: Field : Trig](x: List[T]) = x match {
-    case List(x1, x2) => Some(sin(x1) * exp((1 - cos(x2)) ** 2) +
+  def bird[T: Field : Trig](x: Seq[T]) = x match {
+    case Seq(x1, x2) => Some(sin(x1) * exp((1 - cos(x2)) ** 2) +
                               cos(x2) * exp((1 - sin(x1)) ** 2) +
                               (x1 - x2) ** 2)
-    case _            => None
+    case _           => None
   }
 
   val domain100 = Interval(Closed(-100.0), Closed(100.0))
 
-  def bohachevsky1[T: Field : IsReal : Trig](x: List[T]) = {
+  def bohachevsky1[T: Field : IsReal : Trig](x: Seq[T]) = {
     x match {
-      case List(x1, x2) =>
+      case Seq(x1, x2) =>
         if (x in domain100)
           Some((x1 ** 2) + 2 * (x2 ** 2) - 0.3 *
               cos(3 * pi * x1) - 0.4 * cos(4 * pi * x2) + 0.7)
@@ -64,9 +64,9 @@ object Functions {
     }
   }
 
-  def bohachevsky2[T: Field : IsReal : Trig](x: List[T]) = {
+  def bohachevsky2[T: Field : IsReal : Trig](x: Seq[T]) = {
     x match {
-      case List(x1, x2) =>
+      case Seq(x1, x2) =>
         if (x in domain100)
           Some((x1 ** 2) + 2 * (x2 ** 2) - 0.3 *
               cos(3 * pi * x1) * cos(4 * pi * x2) + 0.3)
@@ -75,9 +75,9 @@ object Functions {
     }
   }
 
-  def bohachevsky3[T: Field : IsReal : Trig](x: List[T]) = {
+  def bohachevsky3[T: Field : IsReal : Trig](x: Seq[T]) = {
     x match {
-      case List(x1, x2) =>
+      case Seq(x1, x2) =>
         if (x in domain100)
           Some((x1 ** 2) + 2 * (x2 ** 2) - 0.3 *
               cos(3 * pi * x1 + 4 * pi * x2) + 0.3)
@@ -86,10 +86,10 @@ object Functions {
     }
   }
 
-  def booth[T: Field : IsReal](x: List[T]) = {
+  def booth[T: Field : IsReal](x: Seq[T]) = {
     val domain = Interval(Closed(-10.0), Closed(10.0))
     x match {
-      case List(x1, x2) =>
+      case Seq(x1, x2) =>
         if (x in domain)
           Some((x1 + 2 * x2 - 7) ** 2 + (2 * x1 + x2 - 5) ** 2)
         else None
@@ -97,11 +97,11 @@ object Functions {
     }
   }
 
-  def bukin4[T: Field : IsReal : Signed](x: List[T]) = {
+  def bukin4[T: Field : IsReal : Signed](x: Seq[T]) = {
     val domain1 = Interval(Closed(-15.0), Closed(-5.0))
     val domain2 = Interval(Closed(-3.0),  Closed(3.0))
     x match {
-      case List(x1, x2) =>
+      case Seq(x1, x2) =>
         if ((x1 in domain1) && (x2 in domain2))
           Some(100 * (x2 ** 2) + 0.01 * abs(x1 + 10))
         else None
@@ -109,11 +109,11 @@ object Functions {
     }
   }
 
-  def bukin6[T: Field : IsReal : NRoot : Signed](x: List[T]) = {
+  def bukin6[T: Field : IsReal : NRoot : Signed](x: Seq[T]) = {
     val domain1 = Interval(Closed(-15.0), Closed(-5.0))
     val domain2 = Interval(Closed(-3.0),  Closed(3.0))
     x match {
-      case List(x1, x2) =>
+      case Seq(x1, x2) =>
         if ((x1 in domain1) && (x2 in domain2))
           Some(100.0 * sqrt(abs(x2 - 0.01 * (x1 ** 2))) + 0.01 * abs(x1 + 10.0))
         else None
@@ -121,10 +121,10 @@ object Functions {
     }
   }
 
-  def damavandi[T: Field : IsReal : Signed : Trig](x: List[T]) = {
+  def damavandi[T: Field : IsReal : Signed : Trig](x: Seq[T]) = {
     val domain = Interval(Closed(0.0), Closed(14.0))
     x match {
-      case List(x1, x2) => if (x in domain) {
+      case Seq(x1, x2) => if (x in domain) {
         val numer = sin(pi * (x1 - 2)) * sin(pi * (x2 - 2))
         val denum = pi ** 2 * (x1 - 2) * (x2 - 2)
         val factor1 = 1 - (abs(numer / denum) ** 5)
@@ -135,13 +135,13 @@ object Functions {
     }
   }
 
-  def dejongF4[T: Field](x: List[T]) =
+  def dejongF4[T: Field](x: Seq[T]) =
     Some(x.zipWithIndex.map { case (xi, i) => (i + 1) * (xi ** 4) }.qsum)
 
-  def easom[T: Field : IsReal : Trig](x: List[T]) = {
+  def easom[T: Field : IsReal : Trig](x: Seq[T]) = {
     val domain = Interval(Closed(-100.0), Closed(100.0))
     x match {
-      case List(x1, x2) =>
+      case Seq(x1, x2) =>
         if (x in domain)
           Some(-cos(x1) * cos(x2) * exp(-((x1 - pi) ** 2 + (x2 - pi) ** 2)))
         else None
@@ -149,10 +149,10 @@ object Functions {
     }
   }
 
-  def eggHolder[T : Field : IsReal : NRoot : Signed : Trig](x: List[T]) = {
+  def eggHolder[T: Field : IsReal : NRoot : Signed : Trig](x: Seq[T]) = {
     val domain = Interval(Closed(-512.0), Closed(512.0))
     x match {
-      case List(x1, x2) => if (x in domain)
+      case Seq(x1, x2) => if (x in domain)
         Some(-(x2 + 47) * sin(sqrt(abs(x2 + (x1 / 2) + 47))) -
              x1 * sin(sqrt(abs(x1 - x2 - 47))))
         else None
@@ -160,10 +160,17 @@ object Functions {
     }
   }
 
-  def goldsteinPrice[T: Field : IsReal](x: List[T]) = {
+  def elliptic[T: Field](x: Seq[T]) = {
+    if (x.length >= 2)
+      Some(x.zipWithIndex.map { case (xi, i) =>
+        (10e6 ** (i / (x.length - 1.0))) * (xi ** 2) }.qsum)
+    else None
+  }
+
+  def goldsteinPrice[T: Field : IsReal](x: Seq[T]) = {
     val domain = Interval(Closed(-2.0), Closed(2.0))
     x match {
-      case List(x1, x2) => if (x in domain) {
+      case Seq(x1, x2) => if (x in domain) {
           val term1 = 1 + ((x1 + x2 + 1) ** 2) * (19 - 14 * x1 + 3 * (x1 ** 2) -
                       14 * x2 + 6 * x1 * x2 + 3 * (x2 ** 2))
           val term2 = 30 + ((2 * x1 - 3 * x2) ** 2) * (18 - 32 * x1 + 12 *
@@ -174,7 +181,7 @@ object Functions {
     }
   }
 
-  def griewank[T: Field : NRoot : Trig](x: List[T]) = {
+  def griewank[T: Field : NRoot : Trig](x: Seq[T]) = {
     val prod = x.zipWithIndex.map { case (xi, i) =>
       cos(xi / sqrt(i + 1))
     }.qproduct
@@ -182,12 +189,12 @@ object Functions {
     spherical(x).map(sum => 1 + sum * (1.0 / 4000.0) - prod)
   }
 
-  def himmelblau[T: Field](x: List[T]) = x match {
-    case List(x1, x2) => Some((x1 ** 2 + x2 - 11) ** 2 + (x1 + x2 ** 2 - 7) ** 2)
-    case _            => None
+  def himmelblau[T: Field](x: Seq[T]) = x match {
+    case Seq(x1, x2) => Some((x1 ** 2 + x2 - 11) ** 2 + (x1 + x2 ** 2 - 7) ** 2)
+    case _           => None
   }
 
-  def katsuura[T: Field : IsReal : NRoot](x: List[T]) = {
+  def katsuura[T: Field : IsReal : NRoot](x: Seq[T]) = {
     val domain = Interval(Closed(-100.0), Closed(100.0))
     if (x in domain) {
       val n = x.length
@@ -204,7 +211,7 @@ object Functions {
     } else None
   }
 
-  def levy[T: Field : IsReal : Trig](x: List[T]) = {
+  def levy[T: Field : IsReal : Trig](x: Seq[T]) = {
     val domain = Interval(Closed(-10.0), Closed(10.0))
 
     def w(i: Int) = 1 + (x(i) - 1) / 4
@@ -223,31 +230,31 @@ object Functions {
     } else None
   }
 
-  def matyas[T: Field : IsReal](x: List[T]) = {
+  def matyas[T: Field : IsReal](x: Seq[T]) = {
     val domain = Interval(Closed(-10.0), Closed(10.0))
     x match {
-      case List(x1, x2) =>
+      case Seq(x1, x2) =>
         if (x in domain) Some(0.26 * (x1 ** 2 + x2 ** 2) - 0.48 * x1 * x2)
         else None
       case _ => None
     }
   }
 
-  def maximum[T: Ordering](x: List[T]) = {
+  def maximum[T: Ordering](x: Seq[T]) = {
     x match {
-      case List() => None
-      case _      => Some(x.max)
+      case Seq() => None
+      case _     => Some(x.max)
     }
   }
 
-  def minimum[T: Ordering](x: List[T]) = {
+  def minimum[T: Ordering](x: Seq[T]) = {
     x match {
-      case List() => None
-      case _      => Some(x.min)
+      case Seq() => None
+      case _     => Some(x.min)
     }
   }
 
-  def michalewicz[T: Field : IsReal : NRoot : Trig](x: List[T]) = {
+  def michalewicz[T: Field : IsReal : NRoot : Trig](x: Seq[T]) = {
     val domain = Interval(Closed(0.0), Closed(pi))
 
     if (x in domain) {
@@ -258,38 +265,38 @@ object Functions {
     } else None
   }
 
-  def nastyBenchmark[T: Field](x: List[T]) =
+  def nastyBenchmark[T: Field](x: Seq[T]) =
     Some(x.zipWithIndex.map { case(xi, i) => (xi - (i + 1)) ** 2 })
 
-  def rastrigin[T: Field : IsReal : Trig](x: List[T]) = {
+  def rastrigin[T: Field : IsReal : Trig](x: Seq[T]) = {
     val domain = Interval(Closed(-5.12), Closed(5.12))
     if (x in domain)
       Some(10 * x.size + x.map(xi => xi ** 2 - 10 * cos(2 * pi * xi)).qsum)
     else None
   }
 
-  def rosenbrock[T: Field](x: List[T]) =
+  def rosenbrock[T: Field](x: Seq[T]) =
     Some((0 until x.length - 1).map(i => {
       val term1 = 100 * (x(i + 1) - x(1) ** 2) ** 2
       val term2 = (x(1) - 1) ** 2
       term1 + term2
     }).qsum)
 
-  def salomon[T: Field : NRoot : Trig](x: List[T]) =
+  def salomon[T: Field : NRoot : Trig](x: Seq[T]) =
     spherical(x).map(sum => -cos(2 * pi * sqrt(sum)) + (0.1 * sqrt(sum)) + 1)
 
-  def schaffer2[T: Field : NRoot](x: List[T]) = x match {
-    case List(_, _) => spherical(x).map(sum =>
+  def schaffer2[T: Field : NRoot](x: Seq[T]) = x match {
+    case Seq(_, _) => spherical(x).map(sum =>
       (sum ** 0.25) * (50 * (sum ** 0.1) + 1))
-    case _          => None
+    case _         => None
   }
 
   def spherical[T: Field](x: Seq[T]) = Some(x.map(_ ** 2).qsum)
 
-  def step[T: Field : IsReal](x: List[T]) =
+  def step[T: Field : IsReal](x: Seq[T]) =
     Some(x.map(xi => (floor(xi) + 0.5) ** 2).qsum)
 
-  def schwefel[T: Field : IsReal : NRoot : Signed : Trig](x: List[T]) = {
+  def schwefel[T: Field : IsReal : NRoot : Signed : Trig](x: Seq[T]) = {
     val domain = Interval(Closed(-500.0), Closed(500.0))
 
     if (x in domain)
@@ -297,17 +304,25 @@ object Functions {
     else None
   }
 
-  def shubert[T: Field : IsReal : Trig](x: List[T]) = {
+  def schwefel12[T: Field](x: Seq[T]) =
+    Some(x.zipWithIndex.map { case (xi, i) => x.take(i + 1).qsum ** 2 }.qsum)
+
+  def schwefel221[T: Ordering : Signed](x: Seq[T]) = maximum(x.map(abs(_)))
+
+  def schwefel222[T: Field : Signed](x: Seq[T]) =
+    Some(x.map(abs(_)).qsum + x.map(abs(_)).qproduct)
+
+  def shubert[T: Field : IsReal : Trig](x: Seq[T]) = {
     val domain = Interval(Closed(-10.0), Closed(10.0))
     if ((x in domain) && (x.length == 2))
       Some(x.map(xi => (1 to 5).map(j => j * cos((j + 1) * xi + j)).qsum).qproduct)
     else None
   }
 
-  def threeHumpCamelback[T: Field : IsReal](x: List[T]) = {
+  def threeHumpCamelback[T: Field : IsReal](x: Seq[T]) = {
     val domain = Interval(Closed(-5.0), Closed(5.0))
     x match {
-      case List(x1, x2) =>
+      case Seq(x1, x2) =>
         if (x in domain)
           Some(2 * x1 ** 2 - 1.05 * x1 ** 4 + ((x1 ** 6) / 6) +
                x1 * x2 + x2 ** 2)
@@ -316,13 +331,41 @@ object Functions {
     }
   }
 
-  def vincent[T: Field : IsReal : Trig](x: List[T]) = {
+  def vincent[T: Field : IsReal : Trig](x: Seq[T]) = {
     val domain = Interval(Closed(0.25), Closed(10.0))
     if (x in domain) Some(-x.map(xi => sin(10.0 * log(xi))).qsum)
     else None
   }
 
-  def zakharov[T: Field : IsReal](x: List[T]) = {
+  def weierstrass[T: Field : Trig](x: Seq[T]) = {
+    val a = 0.5
+    val b = 3.0
+    val kmax = 20
+    val constant = (for { k <- 0 to kmax
+      t1 = a ** k
+      t2 = cos(2 * pi * (b ** k) * 0.5)
+    } yield t1 * t2).qsum
+
+    val factor1 = x.map(xi => (for { k <- 0 to kmax
+      t1 = a ** k
+      t2 = cos(2 * pi * (b ** k) * (xi + 0.5))
+    } yield t1 * t2).qsum).qsum
+
+    factor1 - x.length * constant
+  }
+
+  def wood[T: Field](x: Seq[T]) = {
+    if (x.length == 4) x match {
+      case Seq(x1, x2, x3, x4) =>
+        Some(100 * (x1 ** 2 - x2) ** 2 + (x1 - 1) ** 2 + (x3 - 1) ** 2 +
+             90 * (x3 ** 2 - x4) ** 2 + 10.1 * ((x2 - 1) ** 2 + (x4 - 1) ** 2) +
+             19.8 * (x2 - 1) * (x4 - 1))
+      case _ => None
+    }
+    else None
+  }
+
+  def zakharov[T: Field : IsReal](x: Seq[T]) = {
     val domain = Interval(Closed(-5.0), Closed(10.0))
     if (x in domain) {
       val term = x.zipWithIndex.map { case (xi, i) => 0.5 * i * xi }.qsum
@@ -330,12 +373,21 @@ object Functions {
     } else None
   }
 
+  def zettle[T: Field](x: Seq[T]) = {
+    if (x.length == 2)
+      x match {
+        case Seq(x1, x2) => Some((x1 ** 2 + x2 ** 2 - 2 * x1) ** 2 + x1 / 4.0)
+        case _           => None
+      }
+    else None
+  }
+
 }
 
 object FunctionWrappers {
 
-  def shifted[T: Ring](f: (List[T]) => Option[T], horizontal: T, vertical: T) =
-    (x: List[T]) => f(x.map(_ - horizontal)).map(_ - vertical)
+  def shifted[T: Ring](f: (Seq[T]) => Option[T], horizontal: T, vertical: T) =
+    (x: Seq[T]) => f(x.map(_ - horizontal)).map(_ - vertical)
 
   def rotated(f: (Seq[Double]) => Option[Double], dim: Int) = {
     // create rotation matrix using QR factorisation

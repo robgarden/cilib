@@ -114,6 +114,10 @@ object FunctionsTest extends Properties("Functions") {
     eggHolder(g).forall(_ >= -959.6407)
   } && eggHolder(List(512.0, 404.2319)) == Some(-959.6406627106155)
 
+  property("elliptic") = forAll { (g: Seq[Double]) =>
+    elliptic(g).forall(_ >= 0.0)
+  }
+
   val genGoldsteinPrice = Gen.containerOfN[List, Double](2, Gen.choose(-2.0, 2.0))
 
   property("goldsteinPrice") = forAll(genGoldsteinPrice) { g =>
@@ -228,6 +232,18 @@ object FunctionsTest extends Properties("Functions") {
     schwefel(g).forall(_ >= 0)
   }
 
+  property("schwefel12") = forAll(genSchwefel) { g =>
+    schwefel12(g).forall(_ >= 0)
+  }
+
+  property("schwefel221") = forAll { (g: List[Double]) =>
+    schwefel221(g).forall(_ >= 0)
+  }
+
+  property("schwefel222") = forAll(genSchwefel) { g =>
+    schwefel222(g).forall(_ >= 0)
+  }
+
   val genShubert = Gen.containerOfN[List, Double](2, Gen.choose(-5.12, 5.12))
 
   property("shubert") = forAll(genShubert) { g =>
@@ -254,6 +270,17 @@ object FunctionsTest extends Properties("Functions") {
     zakharov(g).forall(_ >= 0.0)
   } && zakharov(x) == Some(0.0)
 
+  val genZettle = Gen.containerOfN[List, Double](2, Arbitrary.arbitrary[Double])
+
+  property("zettle") = forAll(genZettle) { g =>
+    zettle(g).forall(_ >= -0.0037912371501199)
+  } && zettle(List(-0.0299, 0.0)) == Some(-0.0037912371501199)
+
+  val genWood = Gen.containerOfN[List, Double](4, Gen.choose(-100.0, 100))
+
+  property("wood") = forAll(genWood) { g =>
+    wood(g).forall(_ >= 0.0)
+  } && wood(List(1.0, 1.0, 1.0, 1.0)) == Some(0.0)
 }
 
 object FunctionWrappersTest extends Properties("FunctionWrappers") {

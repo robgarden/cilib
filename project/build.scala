@@ -53,7 +53,7 @@ object CIlibBuild extends Build {
       "-language:higherKinds",
       "-language:implicitConversions",
       "-unchecked",
-      "-Xfatal-warnings",
+      //"-Xfatal-warnings",
       "-Xfuture",
       "-Xlint",
       //"-Yno-imports",

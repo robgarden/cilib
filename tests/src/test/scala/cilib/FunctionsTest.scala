@@ -29,12 +29,54 @@ object FunctionsTest extends Properties("Functions") {
   val genAckley = Gen.containerOf[List, Double](Gen.choose(-32.768, 32.768))
 
   property("ackley") = forAll(genAckley) { g =>
-    ackley(g).forall(_ >= 0.0)
+    g match {
+      case List() => ackley(g) == None
+      case _      => ackley(g).forall(_ >= 0.0)
+    }
   } && ackley(x).forall(_ < epsilon)
 
-  property("alpine") = forAll { (g: List[Double]) =>
-    alpine(g).forall(_ >= 0.0)
-  } && alpine(x) == Some(0.0)
+  val genAdjiman = Gen.containerOfN[List, Double](2, Gen.choose(-5.0, 5.0))
+
+  property("adjiman") = forAll(genAdjiman) { g =>
+    adjiman(g).forall(_ >= -5.02181)
+  } && adjiman(List(2, 0.10578)) == Some(-2.0218067833370204)
+
+  property("alpine1") = forAll { (g: List[Double]) =>
+    alpine1(g).forall(_ >= 0.0)
+  } && alpine1(x) == Some(0.0)
+
+//  val genAlpine2 = Gen.containerOf[List, Double](Gen.choose(0.0, 10.0))
+//
+//  property("alpine2") = forAll(genAlpine2) { g =>
+//
+//    println(alpine2(Seq(7.917, 7.917, 7.917)))
+//    alpine2(g).forall(_ >= -6.1295)
+//  } && alpine2(Seq(7.917, 7.917, 7.917)) == Some(-6.1295)
+  
+  val genArithmeticMean = Gen.containerOf[List, Double](Gen.choose(0.0, 10.0))
+
+  property("arithmeticMean") = forAll(genArithmeticMean) { g =>
+    arithmeticMean(g).forall(_ >= 0.0)
+  } && arithmeticMean(x) == Some(0.0)
+
+  val genBartelsConn = Gen.containerOfN[List, Double](2, Gen.choose(-50.0, 50.0))
+
+  property("bartelsConn") = forAll(genBartelsConn) { g =>
+    bartelsConn(g).forall(_ >= 1.0)
+  } && {
+    bartelsConn(List(0.0, 0.0)) == Some(1.0) &&
+    bartelsConn(x) == None
+  }
+
+//  val genBiggsExp2 = Gen.containerOfN[List, Double](2, Gen.choose(0.0, 20.0))
+//
+//  property("biggsExp2") = forAll(genBiggsExp2) { g =>
+//    biggsExp2(g).forall(_ >= 0.0)
+//  } && {
+//    println(biggsExp2(List(1.0, 10.0)))
+//    biggsExp2(List(1.0, 10.0)) == Some(0.0) &&
+//    biggsExp2(x) == None
+//  }
 
   val genBeale = Gen.containerOfN[List, Double](2, Gen.choose(-4.5, 4.5))
 
@@ -63,6 +105,14 @@ object FunctionsTest extends Properties("Functions") {
     bohachevsky2(x) == None &&
     bohachevsky3(x) == None
   }
+
+//  val genBonyadiMichalewicz = Gen.containerOf[List, Double](Gen.choose(-5.0, 5.0))
+//
+//  property("bonyadiMichalewicz") = forAll(genBonyadiMichalewicz) { g =>
+//    bonyadiMichalewicz(g).forall(_ >= -0.25)
+//  } && forAll(Gen.containerOf[List, Double](Gen.const(2.0))) { g =>
+//    bonyadiMichalewicz(g) == Some(-0.25)
+//  }
 
   val genBooth = Gen.containerOfN[List, Double](2, Gen.choose(-10.0, 10.0))
 
@@ -138,7 +188,7 @@ object FunctionsTest extends Properties("Functions") {
 
   property("katsuura") = forAll(genKatsuura) { g =>
     g match {
-      case List() => katsuura(g) == None
+///      case List() => katsuura(g) == None
       case _ => katsuura(g).forall(_ >= 0.0)
     }
   }
@@ -266,7 +316,7 @@ object FunctionsTest extends Properties("Functions") {
 
   val genZakharov = Gen.containerOf[List, Double](Gen.choose(-5.00, 10.0))
 
-  property("zakharov") = forAll { (g: List[Double]) =>
+  property("zakharov") = forAll(genZakharov) { g =>
     zakharov(g).forall(_ >= 0.0)
   } && zakharov(x) == Some(0.0)
 

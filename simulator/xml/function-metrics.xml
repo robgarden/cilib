@@ -32,15 +32,6 @@
             </initialisationStrategy>
         </algorithm>
 
-        <algorithm id="dispersion" class="pso.PSO">
-            <addStoppingCondition class="stoppingcondition.MeasuredStoppingCondition" target="1" />
-            <iterationStrategy class="algorithm.population.NullIterationStrategy" />
-            <initialisationStrategy class="algorithm.initialisation.ClonedPopulationInitialisationStrategy">
-                <entityNumber value="1000" />
-                <entityType class="pso.particle.StandardParticle" />
-            </initialisationStrategy>
-        </algorithm>
-
         <algorithm id="gradient" class="pso.PSO">
             <addStoppingCondition class="stoppingcondition.MeasuredStoppingCondition" target="1" />
             <iterationStrategy class="algorithm.population.NullIterationStrategy" />
@@ -54,7 +45,7 @@
             </initialisationStrategy>
         </algorithm>
 
-        <algorithm id="fdc" class="pso.PSO">
+        <algorithm id="sample1000" class="pso.PSO">
             <addStoppingCondition class="stoppingcondition.MeasuredStoppingCondition" target="1" />
             <iterationStrategy class="algorithm.population.NullIterationStrategy" />
             <initialisationStrategy class="algorithm.initialisation.ClonedPopulationInitialisationStrategy">
@@ -63,14 +54,6 @@
             </initialisationStrategy>
         </algorithm>
 
-        <algorithm id="fci" class="pso.PSO">
-            <addStoppingCondition class="stoppingcondition.MeasuredStoppingCondition" target="1" />
-            <iterationStrategy class="algorithm.population.NullIterationStrategy" />
-            <initialisationStrategy class="algorithm.initialisation.ClonedPopulationInitialisationStrategy">
-                <entityNumber value="1000" />
-                <entityType class="pso.particle.StandardParticle" />
-            </initialisationStrategy>
-        </algorithm>
     </algorithms>
 
     <problems>
@@ -83,7 +66,7 @@
         <addMeasurement class="measurement.functionmetric.FEM"/>
     </measurements>
 
-    <measurements id="dispersion-measurement" class="simulator.MeasurementSuite" resolution="10">
+    <measurements id="dispersion" class="simulator.MeasurementSuite" resolution="10">
         <addMeasurement class="measurement.functionmetric.Dispersion"/>
     </measurements>
 
@@ -102,6 +85,12 @@
     <measurements id="fdc-measurement" class="simulator.MeasurementSuite" resolution="10">
         <addMeasurement class="measurement.functionmetric.ScalaFunctionMetricWrapper">
             <setMetric class="measurement.functionmetric.FDCSearchability" />
+        </addMeasurement>
+    </measurements>
+
+    <measurements id="information-landscape" class="simulator.MeasurementSuite" resolution="10">
+        <addMeasurement class="measurement.functionmetric.ScalaFunctionMetricWrapper">
+            <setMetric class="measurement.functionmetric.InformationLandscape" />
         </addMeasurement>
     </measurements>
 
@@ -131,9 +120,9 @@
             <output format="TXT" file="data/fem-macro-ackley.txt"/>
         </simulation>
         <simulation samples="30">
-            <algorithm idref="dispersion"/>
+            <algorithm idref="sample1000"/>
             <problem idref="ackley"/>
-            <measurements idref="dispersion-measurement" />
+            <measurements idref="dispersion" />
             <output format="TXT" file="data/dispersion-ackley.txt"/>
         </simulation>
         <simulation samples="30">
@@ -149,25 +138,25 @@
             <output format="TXT" file="data/gdev-ackley.txt"/>
         </simulation>
         <simulation samples="30">
-            <algorithm idref="fdc" />
+            <algorithm idref="sample1000" />
             <problem idref="ackley"/>
             <measurements idref="fdc-measurement" />
             <output format="TXT" file="data/fdc-ackley.txt"/>
         </simulation>
          <simulation samples="1">
-            <algorithm idref="fci" />
+            <algorithm idref="sample1000" />
             <problem idref="ackley"/>
-            <measurements idref="fcicog" />
-            <output format="TXT" file="data/fcicog-ackley.txt"/>
+            <measurements idref="information-landscape" />
+            <output format="TXT" file="data/il-ackley.txt"/>
         </simulation>
          <simulation samples="30">
-            <algorithm idref="fci" />
+            <algorithm idref="sample1000" />
             <problem idref="ackley"/>
             <measurements idref="fcicog" />
             <output format="TXT" file="data/fcicog-ackley.txt"/>
         </simulation>
         <simulation samples="30">
-            <algorithm idref="fci" />
+            <algorithm idref="sample1000" />
             <problem idref="ackley"/>
             <measurements idref="fcisoc" />
             <output format="TXT" file="data/fcisoc-ackley.txt"/>

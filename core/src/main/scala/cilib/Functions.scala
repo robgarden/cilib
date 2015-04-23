@@ -6,7 +6,6 @@ import scalaz.{Functor,Foldable,Foldable1,Applicative,Monoid,NonEmptyList,Id,One
 import scalaz.syntax.apply._
 import scalaz.syntax.foldable._
 import scalaz.std.list._
-import scalaz.std.tuple._
 import scalaz.std.option._
 import scalaz.syntax.std.option._
 
@@ -229,10 +228,8 @@ object Functions {
 
   def chungReynolds[F[_]: Foldable1, A: Ring : Monoid](x: F[A]) = (x.foldMap(_ ** 2) ** 2).some
 
-  def cigar[F[_]: Foldable, A: Field : Monoid](condition: Double = 10e6)(x: Sized2And[F, A]) = {
-    def one(s: A) = x.a ** 2 + condition * s
-    (one(x.b) + x.rest.foldMap(one(_))).some
-  }
+  def cigar[F[_]: Foldable, A: Field : Monoid](condition: Double = 10e6)(x: Sized2And[F, A]) =
+    (x.a ** 2 + x.b ** 2 * condition + x.rest.foldMap(_ ** 2) * condition).some
 
   def colville[A: Field](x: Sized4[A]) = {
     val (x1, x2, x3, x4) = x
@@ -249,7 +246,7 @@ object Functions {
 
   def crossInTray[F[_]: Foldable1, A: NRoot : Signed : Trig : Monoid](x: F[A])(implicit A: Field[A]) = {
     val t1 = x.foldLeft(A.one)((a,c) => a * sin(c))
-    val t2 = exp(abs(100.0 - (sqrt(x.fold) / pi)))
+    val t2 = exp(abs(100.0 - (sqrt(x.foldMap(_ ** 2)) / pi)))
 
     (-0.0001 * ((abs(t1 * t2) + 1.0) ** 0.1)).some
   }
@@ -261,7 +258,12 @@ object Functions {
     crossInTray(x).map(-_)
 
   def csendes[F[_]: Foldable1, A: Field : Trig : Monoid](x: F[A]) =
-    x.foldMap(xi => (xi ** 6) * (2 + sin(1.0 / xi))).some
+    x.foldMapM { xi =>
+      if (xi != 0.0)
+        ((xi ** 6) * (2 + sin(1.0 / xi))).some
+      else
+        none
+    }
 
   def cube[A: Field](x: Sized2[A]) = {
     val (x1, x2) = x
@@ -299,7 +301,7 @@ object Functions {
   }
 
   def deckkersAarts[A: Field](x: Sized2[A]) = {
-    val (x1, x2) = x map { _ ** 2 }
+    val (x1, x2) = (x._1 ** 2, x._2 ** 2)
     val t1 = (10 ** 5) * x1 + x2
     val t2 = (x1 + x2) ** 2
     val t3 = (1.0 / (10 ** 5)) * ((x1 + x2) ** 4)
@@ -352,7 +354,7 @@ object Functions {
       }
 
       val t1 = ((x.a - 1) ** 2)
-      val t2 = (x.b :: x.rest.toList).sliding(2).toList.zipWithIndex.foldMap(t)
+      val t2 = (x.a :: x.b :: x.rest.toList).sliding(2).toList.zipWithIndex.foldMap(t)
       (t1 + t2).some
   }
 

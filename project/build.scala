@@ -197,7 +197,7 @@ object CIlibBuild extends Build {
       "org.scalacheck" %% "scalacheck" % "1.12.1" % "test",
       "org.scalaz" %% "scalaz-scalacheck-binding" % "7.1.0"
     ),
-    testOptions in Test += Tests.Argument(TestFrameworks.ScalaCheck, "-verbosity", "2")
+    testOptions in Test += Tests.Argument(TestFrameworks.ScalaCheck, "-verbosity", "5")
   ) ++ noPublish
 
 

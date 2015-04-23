@@ -81,7 +81,6 @@ object FunctionsTest extends Properties("Functions") {
     ackley(g) >= 0.0
   } && ackley(zero).forall(_ < epsilon)
 
-
   property("adjiman") = forAll(genN(2, -5.0, 5.0)) { g =>
     toSized2(g).flatMap(adjiman(_)) >= -5.02181
   } && adjiman((2.0, 0.10578)) == Some(-2.0218067833370204)
@@ -172,9 +171,13 @@ object FunctionsTest extends Properties("Functions") {
     chungReynolds(g) >= 0.0
   } && chungReynolds(zero) == Some(0.0)
 
-  property("cigar") = forAll(gen[List](Double.MinValue, Double.MaxValue)) { (g: List[Double]) =>
-    toSized2And(g).flatMap(cigar()(_)) >= 0.0
-  } && toSized2And(List(0.0, 0.0, 0.0)).flatMap(cigar()(_)) == Some(0.0)
+  property("cigar") = forAll/*(gen[List](Double.MinValue, Double.MaxValue))*/ { (g: List[Double]) =>
+    val fit = toSized2And(g).flatMap(x => cigar(10e6)(x))
+    if (g.length >= 2)
+      fit >= 0.0
+    else
+      fit.isEmpty
+  } && toSized2And(List(0.0, 0.0, 0.0)).flatMap(x => cigar(10e6)(x)) == Some(0.0)
 
   property("colville") = forAll(genN(4, -10.0, 10.0)) { g =>
     toSized4(g).flatMap(colville(_)) >= 0.0
@@ -199,8 +202,12 @@ object FunctionsTest extends Properties("Functions") {
   }
 
   property("csendes") = forAll(gen(-1.0, 1.0)) { g =>
-    csendes(g) >= 0.0
-  } //&& csendes(zero) == Some(Double.NaN)
+    val fit = csendes(g)
+    if (g.any(_ == 0.0))
+      fit === None
+    else
+     fit >= 0.0
+  } && csendes(zero) === None
 
   property("cube") = forAll(genN(2, -10.0, 10.0)) { g =>
     toSized2(g).flatMap(cube(_)) >= 0.0
@@ -249,13 +256,13 @@ object FunctionsTest extends Properties("Functions") {
     toSized1And(List(1.0, 1.0)).flatMap(discus(_)) == Some(1e6 + 1.0)
   }
 
-  // property("dixonPrice") = forAll(gen(-10.0, 10.0)) { g =>
-  //   dixonPrice(g) >= 0.0
-  // } && dixonPrice(List(1.0, 1.0 / sqrt(2))) ~ (0.0, epsilon)
+  property("dixonPrice") = forAll(gen[List](-10.0, 10.0)) { g =>
+    toSized2And(g).flatMap(dixonPrice(_)) >= 0.0
+  } && toSized2And(List(1.0, 1.0 / sqrt(2))).flatMap(dixonPrice(_)) ~ (0.0, epsilon)
 
-  // property("dropWave") = forAll(gen(-5.12, 5.12)) { g =>
-  //   dropWave(g) >= -1.0
-  // } && dropWave(zero) == Some(-1.0)
+  property("dropWave") = forAll(gen(-5.12, 5.12)) { g =>
+    dropWave(g) >= -1.0
+  } && dropWave(zero) == Some(-1.0)
 
   // property("easom") = forAll(genN(2, -100.0, 100.0)) { g =>
   //   easom(g) >= -1.0

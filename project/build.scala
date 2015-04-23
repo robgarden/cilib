@@ -194,8 +194,10 @@ object CIlibBuild extends Build {
   lazy val testsSettings = Seq(
     name := "cilib-tests",
     libraryDependencies ++= Seq(
-      "org.scalacheck" %% "scalacheck" % "1.12.1" % "test"
-    )
+      "org.scalacheck" %% "scalacheck" % "1.12.1" % "test",
+      "org.scalaz" %% "scalaz-scalacheck-binding" % "7.1.0"
+    ),
+    testOptions in Test += Tests.Argument(TestFrameworks.ScalaCheck, "-verbosity", "2")
   ) ++ noPublish
 
 

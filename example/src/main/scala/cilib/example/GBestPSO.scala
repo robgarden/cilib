@@ -11,7 +11,7 @@ import spire.implicits._
 object GBestPSO {
 
   def main(args: Array[String]): Unit = {
-    val sum = Problem.static((a: List[Double]) => Functions.spherical(a).map(Valid))
+    val sum = Problems.spherical[List,Double]
 
     // Define a normal GBest PSO and run it for a single iteration
     val cognitive = Guide.pbest[Mem[List,Double],List,Double]

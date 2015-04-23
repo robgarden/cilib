@@ -12,7 +12,7 @@ import spire.implicits._
 object LBestPSO {
 
   def main(args: Array[String]): Unit = {
-    val sum = Problem.static((a: List[Double]) => Functions.spherical(a).map(Valid(_)))
+    val sum = Problems.spherical[List,Double]
 
     // LBest is a network topology where every Paricle 'x' has (n/2) neighbours
     // on each side. For example, a neighbourhood size of 3 means that there is

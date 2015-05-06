@@ -71,7 +71,7 @@ object FunctionsTest extends Properties("Functions") {
   def genNEL(l: Double = Double.MinValue, u: Double = Double.MaxValue) =
     gen1And(l, u).map(x => NonEmptyList.nel(x.head, x.tail))
 
-  property("absoluteValue") = forAll(genNEL()) { g =>
+  property("absoluteValue") = forAll(genNEL(-100.0, 100.0)) { g =>
     val abs = absoluteValue(g)
     abs === absoluteValue(g.map(_ * -1)) &&
     abs >= 0.0 &&
@@ -90,7 +90,7 @@ object FunctionsTest extends Properties("Functions") {
     adjiman(g) >= -5.02181
   } && adjiman((2.0, 0.10578)) === -2.0218067833370204
 
-  property("alpine1") = forAll(genNEL()) { g =>
+  property("alpine1") = forAll(genNEL(-10.0, 10.0)) { g =>
     alpine1(g) >= 0.0
   } && alpine1(zero) === 0.0
 
@@ -170,7 +170,7 @@ object FunctionsTest extends Properties("Functions") {
     chungReynolds(g) >= 0.0
   } && chungReynolds(zero) === 0.0
 
-  property("cigar") = forAll(gen2And()) { g =>
+  property("cigar") = forAll(gen2And(-100.0, 100.0)) { g =>
     cigar(10e6)(g) >= 0.0
   } && cigar(10e6)(Sized2And(0.0, 0.0, List(0.0))) === 0.0
 

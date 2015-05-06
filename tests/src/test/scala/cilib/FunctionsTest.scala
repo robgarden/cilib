@@ -1,63 +1,27 @@
 package cilib
 
-import _root_.scala.Predef.{any2stringadd => _, ArrowAssoc => _, Ensuring => _, StringFormat => _, _}
+import _root_.scala.Predef._
 
 import cilib.Functions._
 
-import scalaz.NonEmptyList
-import scalaz.syntax.foldable1._
+import scalaz.{NonEmptyList,OneAnd}
 import scalaz.std.list._
+import scalaz.syntax.traverse._
 
 import org.scalacheck._
 import org.scalacheck.Prop._
 import org.scalacheck.Gen
-import org.scalacheck.Arbitrary
-import org.scalacheck.util.Buildable
 
 import spire.math._
 import spire.implicits._
 
 object FunctionsTest extends Properties("Functions") {
 
-  def NEL[T](xs: T*): NonEmptyList[T] = NonEmptyList(xs.head, xs.tail: _*)
-
-  val zero = NEL(0.0, 0.0, 0.0)
+  val zero = NonEmptyList.nels(0.0, 0.0, 0.0)
   def accurate(v: Double, d: Double, e: Double) = abs(v - d) <= e
 
   def epsilon(precision: Double) = 1.0 / (10.0 ** precision)
   val epsilon = 1e-15
-
-  def debug(f: Seq[Double] => Option[Double], x: List[Double]) =
-    println(f(x).toString + " " + x.toString)
-
-  implicit val zeroValue = 0.0
-  implicit def buildableNEL[T](implicit zeroValue: T) = new Buildable[T, NonEmptyList[T]] {
-    def builder = new collection.mutable.Builder[T, NonEmptyList[T]] {
-      val al = new collection.mutable.MutableList[T]
-      def +=(x: T) = { al += x; this }
-      def clear() = al.clear()
-      def result() = {
-        if (al.isEmpty)
-          NEL(zeroValue)
-        else
-          NonEmptyList.nel(al.head, al.tail.toList)
-      }
-    }
-  }
-
-  implicit def traversableNEL[T](xs: NonEmptyList[T]): Traversable[T] = xs.stream
-
-  type SCB[F[_]] = Buildable[Double, F[Double]]
-  type SCV[F[_]] = F[Double] => Traversable[Double]
-
-  def gen[F[_]: SCB : SCV](a: Double, b: Double) =
-    Gen.containerOf[F, Double](Gen.choose(a, b))
-  def genN[F[_]: SCB : SCV](n: Int, a: Double, b: Double) =
-    Gen.containerOfN[F, Double](n, Gen.choose(a, b))
-  def genArbN[F[_]: SCB : SCV](n: Int) =
-    Gen.containerOfN[F, Double](n, Arbitrary.arbitrary[Double])
-  def genConst[F[_]: SCB : SCV](a: Double) =
-    Gen.containerOf[F, Double](Gen.const(a))
 
   implicit class OptionDoubleOps(o: Option[Double]) {
     def >=(d: Double) = o.forall(_ >= d)
@@ -66,142 +30,172 @@ object FunctionsTest extends Properties("Functions") {
     def ~(d: Double) = o.forall(accurate(_, d, epsilon))
   }
 
-  property("absoluteValue") = forAll { (g: NonEmptyList[Double]) =>
+  def gen1(l: Double = Double.MinValue, u: Double = Double.MaxValue) = (Gen.choose(l, u))
+
+  def gen2(l: Double = Double.MinValue, u: Double = Double.MaxValue) =
+    for {
+      a <- Gen.choose(l, u)
+      b <- Gen.choose(l, u)
+    } yield (a, b)
+
+  def gen4(l: Double = Double.MinValue, u: Double = Double.MaxValue) =
+    for {
+      a <- Gen.choose(l, u)
+      b <- Gen.choose(l, u)
+      c <- Gen.choose(l, u)
+      d <- Gen.choose(l, u)
+    } yield (a, b, c, d)
+
+  def gen5(l: Double = Double.MinValue, u: Double = Double.MaxValue) =
+    for {
+      a <- Gen.choose(l, u)
+      b <- Gen.choose(l, u)
+      c <- Gen.choose(l, u)
+      d <- Gen.choose(l, u)
+      e <- Gen.choose(l, u)
+    } yield (a, b, c, d, e)
+
+  def gen1And(l: Double = Double.MinValue, u: Double = Double.MaxValue) =
+    for {
+      a <- Gen.choose(l, u)
+      b <- Gen.containerOf[List, Double](Gen.choose(l, u))
+    } yield OneAnd(a, b)
+
+  def gen2And(l: Double = Double.MinValue, u: Double = Double.MaxValue) =
+    for {
+      a <- Gen.choose(l, u)
+      b <- Gen.choose(l, u)
+      c <- Gen.containerOf[List, Double](Gen.choose(l, u))
+    } yield Sized2And(a, b, c)
+
+  def genNEL(l: Double = Double.MinValue, u: Double = Double.MaxValue) =
+    gen1And(l, u).map(x => NonEmptyList.nel(x.head, x.tail))
+
+  property("absoluteValue") = forAll(genNEL()) { g =>
     val abs = absoluteValue(g)
     abs === absoluteValue(g.map(_ * -1)) &&
     abs >= 0.0 &&
     abs >= g.foldMap()
   } && {
-    absoluteValue(zero) == Some(0.0) &&
-    absoluteValue(NEL(1.0, 2.0, 3.0)) == Some(6.0) &&
-    absoluteValue(NEL(1.0, 2.0, 3.0).map(_ * -1)) == Some(6.0)
+    absoluteValue(zero) === 0.0 &&
+    absoluteValue(NonEmptyList.nels(1.0, 2.0, 3.0)) === 6.0 &&
+    absoluteValue(NonEmptyList.nels(-1.0, -2.0, -3.0)) === 6.0
   }
 
-  property("ackley") = forAll(gen(-32.768, 32.768)) { g =>
+  property("ackley") = forAll(genNEL(-32.768, 32.768)) { g =>
     ackley(g) >= 0.0
-  } && ackley(zero).forall(_ < epsilon)
+  } && ackley(zero) < epsilon
 
-  property("adjiman") = forAll(genN(2, -5.0, 5.0)) { g =>
-    toSized2(g).flatMap(adjiman(_)) >= -5.02181
-  } && adjiman((2.0, 0.10578)) == Some(-2.0218067833370204)
+  property("adjiman") = forAll(gen2(-5.0, 5.0)) { g =>
+    adjiman(g) >= -5.02181
+  } && adjiman((2.0, 0.10578)) === -2.0218067833370204
 
-  property("alpine1") = forAll { (g: NonEmptyList[Double]) =>
+  property("alpine1") = forAll(genNEL()) { g =>
     alpine1(g) >= 0.0
-  } && alpine1(zero) == Some(0.0)
+  } && alpine1(zero) === 0.0
 
-  property("arithmeticMean") = forAll(gen(0.0, 1.0)) { g =>
+  property("arithmeticMean") = forAll(genNEL(0.0, 1.0)) { g =>
     arithmeticMean(g) >= 0.0
-  } && arithmeticMean(zero) == Some(0.0)
+  } && arithmeticMean(zero) === 0.0
 
-  property("bartelsConn") = forAll(genN(2, -50.0, 50.0)) { g =>
-    toSized2(g).flatMap(bartelsConn(_)) >= 1.0
+  property("bartelsConn") = forAll(gen2(-50.0, 50.0)) { g =>
+    bartelsConn(g) >= 1.0
+  } && bartelsConn((0.0, 0.0)) === 1.0
+
+  property("beale") = forAll(gen2(-4.5, 4.5)) { g =>
+    beale(g) >= 0.0
+  } && beale((3.0, 0.5)) === 0.0
+
+  property("bohachevsky") = forAll(gen2(-100.0, 100.0)) { g =>
+    bohachevsky1(g) >= 0.0 &&
+    bohachevsky2(g) >= 0.0 &&
+    bohachevsky3(g) >= 0.0
   } && {
-    toSized2(List(0.0, 0.0)).flatMap(bartelsConn(_)) == Some(1.0)
+    val zero2 = (0.0, 0.0)
+    bohachevsky1(zero2) === 0.0 &&
+    bohachevsky2(zero2) === 0.0 &&
+    bohachevsky3(zero2) === 0.0
   }
 
-  property("beale") = forAll(gen(-4.5, 4.5)) { g =>
-    toSized2(g).flatMap(beale(_)) >= 0.0
-  } && toSized2(List(3, 0.5)).flatMap(beale(_)) == Some(0.0)
-
-  property("bohachevsky") = forAll(genN(2, -100.0, 100.0)) { g =>
-    toSized2(g).flatMap(bohachevsky1(_)) >= 0.0 &&
-    toSized2(g).flatMap(bohachevsky2(_)) >= 0.0 &&
-    toSized2(g).flatMap(bohachevsky3(_)) >= 0.0
+  property("booth") = forAll(gen2(-10.0, 10.0)) { g =>
+    booth(g) >= 0.0
   } && {
-    val zero2 = toSized2(List(0.0, 0.0))
-    zero2.flatMap(bohachevsky1(_)) == Some(0.0) &&
-    zero2.flatMap(bohachevsky2(_)) == Some(0.0) &&
-    zero2.flatMap(bohachevsky3(_)) == Some(0.0)
+    booth((1.0, 3.0)) === 0.0
   }
 
-  property("booth") = forAll(genN(2, -10.0, 10.0)) { g =>
-    toSized2(g).flatMap(booth(_)) >= 0.0
-  } && {
-    toSized2(List(1.0, 3.0)).flatMap(booth(_)) == Some(0.0)
-  }
-
-  val genBraninRCOS = Gen.containerOfN[List, NonEmptyList[Double]](1, for {
+  val genBraninRCOS = for {
     x1 <- Gen.choose(-5.0, 10.0)
     x2 <- Gen.choose(0.0, 15.0)
-  } yield NEL(x1, x2))
+  } yield (x1, x2)
 
   property("braninRCOS1") = forAll(genBraninRCOS) { g =>
-    toSized2(g.flatten).flatMap(braninRCOS1(_)) >= 0.3978874 - epsilon
-  } && toSized2(NEL(-pi, 12.275)).flatMap(braninRCOS1(_)) ~ (0.3978874, epsilon(5))
+    braninRCOS1(g) >= 0.3978874 - epsilon
+  } && accurate(braninRCOS1((-pi, 12.275)), 0.3978874, epsilon(5))
 
-  property("brent") = forAll(gen(-10.0, 10.0)) { g =>
+  property("brent") = forAll(genNEL(-10.0, 10.0)) { g =>
     brent(g) >= 0.0
-  } && brent(NEL(-10.0, -10.0, -10.0)) ~ (0, epsilon)
+  } && accurate(brent(NonEmptyList.nels(-10.0, -10.0, -10.0)), 0.0, epsilon)
 
-  property("brown") = forAll(gen[List](-1.0, 1.0)) { g =>
-    toSized2And(g).flatMap(brown(_)) >= 0.0
-  } && toSized2And(List(0.0, 0.0, 0.0)).flatMap(brown(_)) == Some(0.0)
+  property("brown") = forAll(gen2And(-1.0, 1.0)) { g =>
+    brown(g) >= 0.0
+  } && brown(Sized2And(0.0, 0.0, List(0.0))) === 0.0
 
-  val genBukin = Gen.containerOfN[List, List[Double]](1, for {
+  val genBukin = for {
     a <- Gen.choose(-15.0, -5.0)
     b <- Gen.choose(-3.0, 3.0)
-  } yield List(a, b))
+  } yield (a, b)
 
-  property("bukin") = forAll(genBukin) { h =>
-    val g = toSized2(h.flatten)
-    g.flatMap(bukin2(_)) >= 0.0 &&
-    g.flatMap(bukin2Adapted(_)) >= 0.0 &&
-    g.flatMap(bukin4(_)) >= 0.0 &&
-    g.flatMap(bukin6(_)) >= 0.0
+  property("bukin") = forAll(genBukin) { g =>
+    bukin2(g) >= 0.0 &&
+    bukin2Adapted(g) >= 0.0 &&
+    bukin4(g) >= 0.0 &&
+    bukin6(g) >= 0.0
   } && {
-    val g = toSized2(NEL(-10.0, 0.0))
-    g.flatMap(bukin2(_))            == Some(0.0) &&
-    g.flatMap(bukin2Adapted(_))     == Some(0.0) &&
-    g.flatMap(bukin4(_))            == Some(0.0) &&
-    toSized2(List(-10.0, 1.0))
-      .flatMap(bukin6(_))           == Some(0.0)
+    val g = (-10.0, 0.0)
+    bukin2(g)            === 0.0 &&
+    bukin2Adapted(g)     === 0.0 &&
+    bukin4(g)            === 0.0 &&
+    bukin6((-10.0, 1.0)) === 0.0
   }
 
-  property("centralTwoPeakTrap") = forAll(genN(1, 0.0, 20.0)) { g =>
-    toSized1(g).flatMap(centralTwoPeakTrap(_)) >= -200.0
-  } && toSized1(List(20.0)).flatMap(centralTwoPeakTrap(_)) == Some(-200.0)
+  property("centralTwoPeakTrap") = forAll(gen1(0.0, 20.0)) { g =>
+    centralTwoPeakTrap(g) >= -200.0
+  } && centralTwoPeakTrap((20.0)) === -200.0
 
-  property("chichinadze") = forAll(genN(2, -30.0, 30.0)) { g =>
-    toSized2(g).flatMap(chichinadze(_)) >= -43.3159
-  } && {
-    toSized2(List(5.90133, 0.5)).flatMap(chichinadze(_)) ~ (-43.3159, epsilon(4))
-  }
+  property("chichinadze") = forAll(gen2(-30.0, 30.0)) { g =>
+    chichinadze(g) >= -43.3159
+  } && accurate(chichinadze((5.90133, 0.5)), -43.3159, epsilon(4))
 
-  property("chungReynolds") = forAll(gen(-100.0, 100.0)) { g =>
+  property("chungReynolds") = forAll(genNEL(-100.0, 100.0)) { g =>
     chungReynolds(g) >= 0.0
-  } && chungReynolds(zero) == Some(0.0)
+  } && chungReynolds(zero) === 0.0
 
-  property("cigar") = forAll/*(gen[List](Double.MinValue, Double.MaxValue))*/ { (g: List[Double]) =>
-    val fit = toSized2And(g).flatMap(x => cigar(10e6)(x))
-    if (g.length >= 2)
-      fit >= 0.0
-    else
-      fit.isEmpty
-  } && toSized2And(List(0.0, 0.0, 0.0)).flatMap(x => cigar(10e6)(x)) == Some(0.0)
+  property("cigar") = forAll(gen2And()) { g =>
+    cigar(10e6)(g) >= 0.0
+  } && cigar(10e6)(Sized2And(0.0, 0.0, List(0.0))) === 0.0
 
-  property("colville") = forAll(genN(4, -10.0, 10.0)) { g =>
-    toSized4(g).flatMap(colville(_)) >= 0.0
+  property("colville") = forAll(gen4(-10.0, 10.0)) { g =>
+    colville(g) >= 0.0
   } && {
-    toSized4(List(1.0, 1.0, 1.0, 1.0)).flatMap(colville(_)) == Some(0.0) &&
-    toSized4(List(0.0, 0.0, 0.0, 0.0)).flatMap(colville(_)) == Some(42.0)
+    colville((1.0, 1.0, 1.0, 1.0)) === 0.0 &&
+    colville((0.0, 0.0, 0.0, 0.0)) === 42.0
   }
 
-  property("cosineMixture") = forAll(gen(-1.0, 1.0)) { g =>
+  property("cosineMixture") = forAll(genNEL(-1.0, 1.0)) { g =>
     cosineMixture(g) >= -0.1 * g.length
-  } && cosineMixture(zero) ~ (-0.1 * zero.length, epsilon(5))
+  } && accurate(cosineMixture(zero), -0.1 * zero.length, epsilon(5))
 
-  property("cross") = forAll(gen(-10.0, 10.0)) { g =>
+  property("cross") = forAll(genNEL(-10.0, 10.0)) { g =>
     crossInTray(g) >= -2.11 &&
     crossLegTable(g) >= -1.0 &&
     crossCrowned(g) >= -0.0001
   } && {
-    crossInTray(NEL(1.349406685353340,1.349406608602084)) ~
-      (-2.06261218, epsilon(6)) &&
-    crossLegTable(zero) == Some(-1.0) &&
-    crossCrowned(zero) == Some(0.0001)
+    accurate(crossInTray(NonEmptyList.nels(1.349406685353340,1.349406608602084)), -2.06261218, epsilon(6)) &&
+    crossLegTable(zero) === -1.0 &&
+    crossCrowned(zero) === 0.0001
   }
 
-  property("csendes") = forAll(gen(-1.0, 1.0)) { g =>
+  property("csendes") = forAll(genNEL(-1.0, 1.0)) { g =>
     val fit = csendes(g)
     if (g.any(_ == 0.0))
       fit === None
@@ -209,60 +203,60 @@ object FunctionsTest extends Properties("Functions") {
      fit >= 0.0
   } && csendes(zero) === None
 
-  property("cube") = forAll(genN(2, -10.0, 10.0)) { g =>
-    toSized2(g).flatMap(cube(_)) >= 0.0
+  property("cube") = forAll(gen2(-10.0, 10.0)) { g =>
+    cube(g) >= 0.0
   } && {
-    toSized2(List(1.0, 1.0)).flatMap(cube(_)) == Some(0.0) &&
-    toSized2(List(-1.0, 1.0)).flatMap(cube(_)) == Some(404.0)
+    cube((1.0, 1.0)) === 0.0 &&
+    cube((-1.0, 1.0)) === 404.0
   }
 
-  property("damavandi") = forAll(genN(2, 0.0, 14.0)) { g =>
-    toSized2(g).flatMap(damavandi(_)) >= 0.0
+  property("damavandi") = forAll(gen2(0.0, 14.0)) { g =>
+    damavandi(g) >= 0.0
   }
 
-  property("deb") = forAll(gen(0.0, 1.0)) { g =>
+  property("deb") = forAll(genNEL(0.0, 1.0)) { g =>
     deb1(g) >= -1.0 &&
     deb3(g) >= -1.0
-  } && deb1(zero) == Some(0.0)
+  } && deb1(zero) === 0.0
 
-  property("decanomial") = forAll(genN(2, -10.0, 10.0)) { g =>
-    toSized2(g).flatMap(decanomial(_)) >= 0.0
-  } && toSized2(List(2.0, -3.0)).flatMap(decanomial(_)) == Some(0.0)
+  property("decanomial") = forAll(gen2(-10.0, 10.0)) { g =>
+    decanomial(g) >= 0.0
+  } && decanomial((2.0, -3.0)) === 0.0
 
-  property("deckkersAarts") = forAll(genN(2, -20.0, 20.0)) { g =>
-    toSized2(g).flatMap(deckkersAarts(_)) >= -24777.0
+  property("deckkersAarts") = forAll(gen2(-20.0, 20.0)) { g =>
+    deckkersAarts(g) >= -24777.0
   } && {
-    toSized2(List(0.0, 15.0)).flatMap(deckkersAarts(_))  ~ (-24771.0, epsilon(0)) &&
-    toSized2(List(0.0, -15.0)).flatMap(deckkersAarts(_)) ~ (-24771.0, epsilon(0))
+    accurate(deckkersAarts((0.0, 15.0)), -24771.0, epsilon(0)) &&
+    accurate(deckkersAarts((0.0, -15.0)), -24771.0, epsilon(0))
   }
 
-  property("deVilliersGlasser1") = forAll(genN(4, 1.0, 100.0)) { g =>
-    toSized4(g).flatMap(deVilliersGlasser1(_)) >= 0.0
+  property("deVilliersGlasser1") = forAll(gen4(1.0, 100.0)) { g =>
+    deVilliersGlasser1(g) >= 0.0
   }
 
-  property("deVilliersGlasser2") = forAll(genN(5, 1.0, 6.0)) { g =>
-    toSized5(g).flatMap(deVilliersGlasser2(_)) >= 0.0
+  property("deVilliersGlasser2") = forAll(gen5(1.0, 6.0)) { g =>
+    deVilliersGlasser2(g) >= 0.0
   }
 
-  property("differentPowers") = forAll(gen[List](-100.0, 100.0)) { g =>
-    toSized2And(g).flatMap(differentPowers(_)) >= 0.0
-  } && toSized2And(List(0.0, 0.0, 0.0)).flatMap(differentPowers(_)) == Some(0.0)
+  property("differentPowers") = forAll(gen2And(-100.0, 100.0)) { g =>
+    differentPowers(g) >= 0.0
+  } && differentPowers(Sized2And(0.0, 0.0, List(0.0))) === 0.0
 
-  property("discus") = forAll(gen[List](-100.0, 100.0)) { g =>
-    toSized1And(g).flatMap(discus(_)) >= 0.0
+  property("discus") = forAll(gen1And(-100.0, 100.0)) { g =>
+    discus(g) >= 0.0
   } && {
-    toSized1And(List(0.0, 0.0, 0.0)).flatMap(discus(_))           == Some(0.0) &&
-    toSized1And(List(1.0)).flatMap(discus(_))      == Some(1e6) &&
-    toSized1And(List(1.0, 1.0)).flatMap(discus(_)) == Some(1e6 + 1.0)
+    discus(OneAnd(0.0, zero))      === 0.0 &&
+    discus(OneAnd(1.0, Nil))       === 1e6 &&
+    discus(OneAnd(1.0, List(1.0))) === 1e6 + 1.0
   }
 
-  property("dixonPrice") = forAll(gen[List](-10.0, 10.0)) { g =>
-    toSized2And(g).flatMap(dixonPrice(_)) >= 0.0
-  } && toSized2And(List(1.0, 1.0 / sqrt(2))).flatMap(dixonPrice(_)) ~ (0.0, epsilon)
+  property("dixonPrice") = forAll(gen2And(-10.0, 10.0)) { g =>
+    dixonPrice(g) >= 0.0
+  } && accurate(dixonPrice(Sized2And(1.0, 1.0 / sqrt(2), Nil)), 0.0, epsilon)
 
-  property("dropWave") = forAll(gen(-5.12, 5.12)) { g =>
+  property("dropWave") = forAll(genNEL(-5.12, 5.12)) { g =>
     dropWave(g) >= -1.0
-  } && dropWave(zero) == Some(-1.0)
+  } && dropWave(zero) === -1.0
 
   // property("easom") = forAll(genN(2, -100.0, 100.0)) { g =>
   //   easom(g) >= -1.0

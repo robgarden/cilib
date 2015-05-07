@@ -24,11 +24,9 @@ object FunctionsTest extends Properties("Functions") {
   def epsilon(precision: Double) = 1.0 / (10.0 ** precision)
   val epsilon = 1e-15
 
-  implicit class OptionDoubleOps(o: Option[Double]) {
-    def >=(d: Double) = o.forall(_ >= d)
-    def <=(d: Double) = o.forall(_ <= d)
-    def ~(d: Double, e: Double) = o.forall(accurate(_, d, e))
-    def ~(d: Double) = o.forall(accurate(_, d, epsilon))
+  implicit class DoubleEpsilonOps(d: Double) {
+    def ~(v: Double, e: Double) = accurate(d, v, e)
+    def ~(v: Double) = accurate(d, v, epsilon)
   }
 
   def gen1(l: Double = Double.MinValue, u: Double = Double.MaxValue) = (Gen.choose(l, u))
@@ -88,6 +86,8 @@ object FunctionsTest extends Properties("Functions") {
 
   def genNEL(l: Double = Double.MinValue, u: Double = Double.MaxValue) =
     gen1And(l, u).map(x => NonEmptyList.nel(x.head, x.tail))
+
+  def genConst(v: Double = Double.MinValue) = genNEL(v, v)
 
   property("absoluteValue") = forAll(genNEL(-100.0, 100.0)) { g =>
     val abs = absoluteValue(g)
@@ -218,7 +218,7 @@ object FunctionsTest extends Properties("Functions") {
     if (g.any(_ == 0.0))
       fit === None
     else
-     fit >= 0.0
+     fit.forall(_ >= 0.0)
   } && csendes(zero) === None
 
   property("cube") = forAll(gen2(-10.0, 10.0)) { g =>
@@ -357,23 +357,9 @@ object FunctionsTest extends Properties("Functions") {
   } && accurate(hartman6((0.201690, 0.150011, 0.476874,
     0.275332, 0.311652, 0.657301)), -3.32236, epsilon(5))
 
-  // property("helicalValley") = forAll(gen3(-10.0, 10.0)) { g =>
-  //   helicalValley(g) >= 0.0
-  // } && helicalValley((1.0, 0.0, 0.0)) === 0.0
-
   property("himmelblau") = forAll(gen2(-6.0, 6.0)) { g =>
     himmelblau(g) >= 0.0
   } && himmelblau((3.0, 2.0)) === 0.0
-
-  // val genHolzman = for {
-  //   a <- Gen.choose(0.1, 100.0)
-  //   b <- Gen.choose(0.0, 25.6)
-  //   c <- Gen.choose(0.0, 5.0)
-  // } yield (a, b, c)
-
-  // property("holzman") = forAll(genHolzman) { g =>
-  //   holzman(g) >= 0.0 
-  // } && accurate(holzman((50.0, 25.0, 1.5)), 0.0, epsilon(14))
 
   property("hosaki") = forAll(gen2(0.0, 10.0)) { g =>
     hosaki(g) >= -2.3458
@@ -491,297 +477,245 @@ object FunctionsTest extends Properties("Functions") {
     multiModal(g) === 0.0
   }
 
-  // property("parsopoulus") = forAll(genN(2, -5.0, 5.0)) { g =>
-  //   parsopoulus(g) >= 0.0
-  // } && {
-  //   val x = List(-1.0, 1.0, -3.0, 3.0, -5.0, 5.0)
-  //   val y = List(0.0, 0.0, -1.0, 1.0, -2.0, 2.0)
-  //   val z = (x zip y).map {
-  //     case (xi, yi) => List(xi * (Math.PI / 2.0), yi * Math.PI)
-  //   }
-  //   z.forall(zi => parsopoulus(zi) ~ 0.0)
-  // }
+  property("parsopoulus") = forAll(gen2(-5.0, 5.0)) { g =>
+    parsopoulus(g) >= 0.0
+  } && {
+    val x = List(-1.0, 1.0, -3.0, 3.0, -5.0, 5.0)
+    val y = List(0.0, 0.0, -1.0, 1.0, -2.0, 2.0)
+    val z = (x zip y).map {
+      case (xi, yi) => (xi * (Math.PI / 2.0), yi * Math.PI)
+    }
+    z.forall(zi => parsopoulus(zi) ~ 0.0)
+  }
 
-  // // property("paviani") = forAll(genN(10, 2.001, 9.999)) { g =>
-  // //   println(paviani(g))
-  // //   paviani(g) >= -45.7784684040686
-  // // } && forAll(genConst(9.350266)) { g =>
-  // //   //paviani(g) ~ (-45.7784684040686)
-  // //   true
-  // // }
+  property("penalty") = forAll(gen2And(-50.0, 50.0)) { g =>
+    penalty1(g) >= 0.0
+    penalty2(g) >= 0.0
+  } && forAll(gen2And(1.0, 1.0)) { g =>
+    penalty2(g) ~ 0.0
+  }
 
-  // property("penalty") = forAll(gen(-50.0, 50.0)) { g =>
-  //   penalty1(g) >= 0.0
-  //   penalty2(g) >= 0.0
-  // } && forAll(genConst(1.0)) { g =>
-  //   (g.length >= 2) ==> (penalty1(g.map(-_)) ~ 0.0)
-  //   (g.length >= 2) ==> (penalty2(g) ~ 0.0)
-  // }
+  property("penHolder") = forAll(gen2(-11.0, 11.0)) { g =>
+    penHolder(g) >= -0.96354
+  } && penHolder((9.646168, -9.646168)) ~ (-0.96354, epsilon(5))
 
-  // property("penHolder") = forAll(genN(2, -11.0, 11.0)) { g =>
-  //   penHolder(g) >= -0.96354
-  // } && {
-  //   val x = List(9.646168, -9.646168)
-  //   val y = x.permutations.toList ++ x.map(-_).permutations.toList
-  //   y.forall(penHolder(_) ~ (-0.96354, epsilon(5)))
-  // }
+  property("periodic") = forAll(genNEL(-10.0, 10.0)) { g =>
+    periodic(g) >= 0.9
+  } && forAll(genConst(0.0)) { g =>
+    periodic(g) === 0.9
+  }
 
-  // property("periodic") = forAll(gen(-10.0, 10.0)) { g =>
-  //   periodic(g) >= 0.9
-  // } && forAll(genConst(0.0)) { g =>
-  //   periodic(g) == Some(0.9)
-  // }
+  property("powell") = forAll(gen4(-4.0, 5.0)) { g =>
+    powell(g) >= 0.0
+  } && powell((0.0, 0.0, 0.0, 0.0)) === 0.0
 
-  // property("powell") = forAll(genN(4, -4.0, 5.0)) { g =>
-  //   powell(g) >= 0.0
-  // } && powell(List(0.0, 0.0, 0.0, 0.0)) == Some(0.0)
+  property("powellSum") = forAll(genNEL(-1.0, 1.0)) { g =>
+    powellSum(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    powellSum(g) === 0.0
+  }
 
-  // property("powellSum") = forAll(gen(-1.0, 1.0)) { g =>
-  //   powellSum(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   powellSum(g) == Some(0.0)
-  // }
+  property("powerSum") = forAll(gen4(0.0, 4.0)) { g =>
+    powerSum(g) >= 0.0
+  } && powerSum((1.0, 2.0, 2.0, 3.0)) === 0.0
 
-  // property("powerSum") = forAll(gen(0.0, 4.0)) { g =>
-  //   powerSum(g) >= 0.0
-  // } && powerSum(List(1.0, 2.0, 2.0, 3.0)) == Some(0.0)
+  property("price1") = forAll(genNEL(-500.0, 500.0)) { g =>
+    price1(g) >= 0.0
+  } && price1(NonEmptyList(5.0, -5.0)) === 0.0
 
-  // property("price1") = forAll(gen(-500.0, 500.0)) { g =>
-  //   price1(g) >= 0.0
-  // } && {
-  //   val x = List(5, -5)
-  //   val y = x.permutations.toList ++ x.map(-_).permutations.toList
-  //   y.forall(price1(_) == Some(0.0))
-  // }
+  property("price2") = forAll(genNEL(-10.0, 10.0)) { g =>
+    price2(g) >= 0.9
+  } && forAll(genConst(0.0)) { g =>
+    price2(g) === 0.9
+  }
 
-  // property("price2") = forAll(gen(-10.0, 10.0)) { g =>
-  //   price2(g) >= 0.9
-  // } && forAll(genConst(0.0)) { g =>
-  //   price2(g) == Some(0.9)
-  // }
+  property("qing") = forAll(genNEL(-500.0, 500.0)) { g =>
+    qing(g) >= 0.0
+  } && qing(NonEmptyList(sqrt(1.0), sqrt(2.0), sqrt(3.0))) ~ 0.0
 
-  // // property("price3") = forAll(genN(2, -500.0, 500.0)) { g =>
-  // //   price3(g) >= 0.9
-  // // } && {
-  // //   val x = List(5.0, -5.0)
-  // //   debug(price3[Double], x)
-  // //   price3(x) == Some(0.9)
-  // // }
+  property("quadratic") = forAll(gen2(-10.0, 10.0)) { g =>
+    quadratic(g) >= -3873.7243
+  } && {
+    quadratic((0.19388, 0.48513)) ~ (-3873.7243, epsilon(3))
+  }
 
-  // property("qing") = forAll(gen(-500.0, 500.0)) { g =>
-  //   val h = g.zipWithIndex.map { case (gi, i) => sqrt(i + 1.0) }
-  //   qing(g) >= 0.0 &&
-  //   qing(h) ~ 0.0
-  // }
+  property("quadric") = forAll(genNEL(-100.0, 100.0)) { g =>
+    quadric(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    quadric(g) === 0.0
+    quadric(NonEmptyList(1.0, 2.0, 3.0)) === 1.0 + 9.0 + 36.0
+  }
 
-  // property("quadratic") = forAll(genN(2, -10.0, 10.0)) { g =>
-  //   quadratic(g) >= -3873.7243
-  // } && {
-  //   quadratic(List(0.19388, 0.48513)) ~ (-3873.7243, epsilon(3))
-  // }
+  property("quintic") = forAll(genNEL(-10.0, 10.0)) { g =>
+    quintic(g) >= 0.0
+  } && {
+    quintic(NonEmptyList(-1.0, 2.0)) === 0.0 &&
+    quintic(NonEmptyList(2.0, -1.0)) === 0.0
+  }
 
-  // property("quadric") = forAll(gen(-100.0, 100.0)) { g =>
-  //   quadric(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   quadric(g) == Some(0.0)
-  //   quadric(List(1.0, 2.0, 3.0)) == Some(1.0 + 9.0 + 36.0)
-  // }
+  property("rastrigin") = forAll(genNEL(-5.12, 5.12)) { g =>
+    rastrigin(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    rastrigin(g) === 0.0
+  }
 
-  // property("quintic") = forAll(gen(-10.0, 10.0)) { g =>
-  //   quintic(g) >= 0.0
-  // } && {
-  //   quintic(List(-1.0, 2.0)) == Some(0.0) &&
-  //   quintic(List(2.0, -1.0)) == Some(0.0)
-  // }
+  property("rosenbrock") = forAll(gen2And(-30.0, 30.0)) { g =>
+    rosenbrock(g) >= 0.0
+  } && forAll(gen2And(1.0, 1.0)) { g =>
+    rosenbrock(g) === 0.0
+  }
 
-  // property("rastrigin") = forAll(gen(-5.12, 5.12)) { g =>
-  //   rastrigin(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   rastrigin(g) == Some(0.0)
-  // }
+  property("rotatedEllipse") = forAll(gen2And(-500.0, 500.0)) { g =>
+    rotatedEllipse1(g) >= 0.0 &&
+    rotatedEllipse2(g) >= 0.0
+  } && forAll(gen2And(0.0, 0.0)) { g =>
+    rotatedEllipse1(g) === 0.0 &&
+    rotatedEllipse2(g) === 0.0
+  }
 
-  // // property("ripple1") = forAll(gen(0.0, 1.0)) { g =>
-  // //   debug(ripple1[Double], g)
-  // //   ripple1(g) >= -2.2
-  // // } && forAll(genConst(0.1)) { g =>
-  // //   (!g.isEmpty) ==> (ripple1(g) == Some(-2.2))
-  // //   true
-  // // }
+  property("salomon") = forAll(genNEL(-100.0, 100.0)) { g =>
+    salomon(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    salomon(g) === 0.0
+  }
 
-  // property("rosenbrock") = forAll(gen(-30.0, 30.0)) { g =>
-  //   rosenbrock(g) >= 0.0
-  // } && forAll(genConst(1.0)) { g =>
-  //   rosenbrock(g) == Some(0.0)
-  // }
+  property("schaffer") = forAll(gen2And(-100.0, 100.0)) { g =>
+    schaffer1(g) >= 0.0 &&
+    schaffer2(g) >= 0.0 &&
+    schaffer3(g) >= 0.0 &&
+    schaffer4(g) >= 0.0
+  } && forAll(gen2And(0.0, 0.0)) { g =>
+    schaffer1(g) === 0.0 &&
+    schaffer2(g) === 0.0 &&
+    schaffer3(Sized2And(0.0, 1.253115, List())) ~ (0.00156685, epsilon(6)) &&
+    schaffer4(Sized2And(0.0, 1.253115, List())) ~ (0.29257900, epsilon(6))
+  }
 
-  // property("rotatedEllipse") = forAll(gen(-500.0, 500.0)) { g =>
-  //   rotatedEllipse1(g) >= 0.0 &&
-  //   rotatedEllipse2(g) >= 0.0
-  // } && {
-  //   rotatedEllipse1(zero) == Some(0.0) &&
-  //   rotatedEllipse2(zero) == Some(0.0)
-  // }
+  property("schwefel1") = forAll(genNEL(-100.0, 100.0)) { g =>
+    schwefel1(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    schwefel1(g) === 0.0
+  }
 
-  // // 0.0 == undefined
-  // // property("rump") = forAll(gen(-500.0, 500.0)) { g =>
-  // //   rump(g) >= 0.0
-  // // } && forAll(genConst(0.0)) { g =>
-  // //   (g.length >= 2) ==> (rump(g) == Some(0.0))
-  // // }
+  property("schwefel12") = forAll(genNEL(-500.0, 500.0)) { g =>
+    schwefel12(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    schwefel12(g) === 0.0
+  }
 
-  // property("salomon") = forAll(gen(-100.0, 100.0)) { g =>
-  //   salomon(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   salomon(g) == Some(0.0)
-  // }
+  property("schwefel221") = forAll(gen1And(-500.0, 500.0)) { g =>
+    schwefel221(g) >= 0.0
+  } && forAll(gen1And(0.0, 0.0)) { g =>
+    schwefel221(g) === 0.0
+  }
 
-  // // property("schaffer") = forAll(gen(-100.0, 100.0)) { g =>
-  // //   schaffer1(g) >= 0.0 &&
-  // //   schaffer2(g) >= 0.0
-  // // } && forAll(genConst(0.0)) { g =>
-  // //   (g.length >= 2) ==> {
-  // //     schaffer1(g) == Some(0.0) &&
-  // //     schaffer1(g) == Some(0.0)
-  // //   }
-  // // }
+  property("schwefel222") = forAll(genNEL(-500.0, 500.0)) { g =>
+    schwefel222(g) >= 0.0
+  }  && forAll(genConst(0.0)) { g =>
+    schwefel222(g) === 0.0
+  }
 
-  // // property("schmidtVetters") = forAll(genN(3, 0.0, 10.0)) { g =>
-  // //   schmidtVetters(g) >= 3.0
-  // // } && {
-  // //   schmidtVetters(List(0.78547, 0.78547, 0.78547)) ~ (3.0, epsilon(2))
-  // // }
+  property("schwefel223") = forAll(genNEL(-10.0, 10.0)) { g =>
+    schwefel223(g) >= 0.0
+  }  && forAll(genConst(0.0)) { g =>
+    schwefel223(g) === 0.0
+  }
 
-  // property("schwefel1") = forAll(gen(-100.0, 100.0)) { g =>
-  //   schwefel1(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   schwefel1(g) == Some(0.0)
-  // }
+  property("schwefel226") = forAll(genNEL(-500.0, 500.0)) { g =>
+    schwefel226(g) >= 0.0
+  } && forAll(genConst(420.968746)) { g =>
+    schwefel226(g) ~ (0.0, epsilon(2))
+  }
 
-  // property("schwefel12") = forAll(gen(-500.0, 500.0)) { g =>
-  //   schwefel12(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   schwefel12(g) == Some(0.0)
-  // }
+  property("schwefel24") = forAll(gen1And(0.0, 10.0)) { g =>
+    schwefel24(g) >= 0.0
+  } && forAll(gen1And(1.0, 1.0)) { g =>
+    schwefel24(g) === 0.0
+  }
 
-  // property("schwefel221") = forAll { (g: List[Double]) =>
-  //   schwefel221(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   (!g.isEmpty) ==> (schwefel221(g) == Some(0.0))
-  // }
+  property("schwefel26") = forAll(gen2(-100.0, 100.0)) { g =>
+    schwefel26(g) >= 0.0
+  } && schwefel26((1.0, 3.0)) === 0.0
 
-  // property("schwefel222") = forAll(gen(-500.0, 500.0)) { g =>
-  //   schwefel222(g) >= 0.0
-  // }  && forAll(genConst(0.0)) { g =>
-  //   (!g.isEmpty) ==> (schwefel222(g) == Some(0.0))
-  // }
+  property("shubert") = forAll(gen2(-5.12, 5.12)) { g =>
+    shubert(g) >= -186.7309
+  }
 
-  // property("schwefel223") = forAll(gen(-10.0, 10.0)) { g =>
-  //   schwefel223(g) >= 0.0
-  // }  && forAll(genConst(0.0)) { g =>
-  //   schwefel223(g) == Some(0.0)
-  // }
+  property("sixHumpCamelback") = forAll(gen2(-5.0, 5.0)) { g =>
+    sixHumpCamelback(g) >= -1.0316285
+  } && {
+    sixHumpCamelback((-0.08983, 0.7126)) ~ (-1.0316285, epsilon(5)) &&
+    sixHumpCamelback((0.08983, -0.7126)) ~ (-1.0316285, epsilon(5))
+  }
 
-  // property("schwefel226") = forAll(gen(-500.0, 500.0)) { g =>
-  //   schwefel226(g) >= 0.0
-  // } && forAll(genConst(420.968746)) { g =>
-  //   schwefel226(g) ~ (0.0, epsilon(2))
-  // }
+  property("spherical") = forAll(genNEL(-100.0, 100.0)) { g =>
+    spherical(g) === spherical(g.map(_ * -1)) &&
+    spherical(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    spherical(g) === 0.0
+  }
 
-  // property("schwefel24") = forAll(gen(0.0, 10.0)) { g =>
-  //   schwefel24(g) >= 0.0
-  // } && forAll(genConst(1.0)) { g =>
-  //   (!g.isEmpty) ==> (schwefel24(g) == Some(0.0))
-  // }
+  property("step") = forAll(genNEL(-100.0, 100.0)) { g =>
+    step1(g) >= 0.0 &&
+    step2(g) >= 0.0 &&
+    step3(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    step1(g) === 0.0 &&
+    step2(g) === 0.25 * g.length &&
+    step3(g) === 0.0
+  }
 
-  // property("schwefel26") = forAll(genN(2, -100.0, 100.0)) { g =>
-  //   schwefel26(g) >= 0.0
-  // } && schwefel26(List(1.0, 3.0)) == Some(0.0)
+  property("sumSquares") = forAll(genNEL(-10.0, 10.0)) { g =>
+    sumSquares(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    sumSquares(g) === 0.0
+  }
 
-  // property("shubert") = forAll(genN(2, -5.12, 5.12)) { g =>
-  //   shubert(g) >= -186.7309
-  // }
+  property("sumDifferentPowers") = forAll(genNEL(-1.0, 1.0)) { g =>
+    sumDifferentPowers(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    sumDifferentPowers(g) === 0.0
+  }
 
-  // property("sixHumpCamelback") = forAll(genN(2, -5.0, 5.0)) { g =>
-  //   sixHumpCamelback(zero) >= -1.0316285
-  // } && {
-  //   sixHumpCamelback(List(-0.08983, 0.7126)) ~ (-1.0316285, epsilon(5)) &&
-  //   sixHumpCamelback(List(0.08983, -0.7126)) ~ (-1.0316285, epsilon(5))
-  // }
+  property("styblinksiTang") = forAll(genNEL(-5.0, 5.0)) { g =>
+    styblinksiTang(g) >= -39.16616570377142 * g.length
+  } && forAll(genConst(-2.90353401818596)) { g =>
+    styblinksiTang(g) ~ (-39.16616570377142 * g.length, epsilon(10))
+  }
 
-  // property("spherical") = forAll { (g: List[Double]) =>
-  //   spherical(g) == spherical(g.map(_ * -1)) &&
-  //   spherical(g) >= 0.0
-  // }
+  property("threeHumpCamelback") = forAll(gen2(-5.0, 5.0)) { g =>
+    threeHumpCamelback(g) >= 0.0
+  } && threeHumpCamelback((0.0, 0.0)) === 0.0
 
-  // property("step") = forAll { (g: List[Double]) =>
-  //   step1(g) >= 0.0 &&
-  //   step2(g) >= 0.0 &&
-  //   step3(g) >= 0.0
-  // } && forAll(genConst(0)) { g =>
-  //   step1(g) == Some(0.0) &&
-  //   step2(g) == Some(0.25 * g.length) &&
-  //   step2(List(1.3, 2.5, 3.7)) == Some(2.25 + 6.25 + 12.25) &&
-  //   step3(g) == Some(0.0)
-  // }
+  property("trecanni") = forAll(gen2(-5.0, 5.0)) { g =>
+    trecanni(g) >= 0.0
+  } && {
+    trecanni((0.0, 0.0))  === 0.0 &&
+    trecanni((-2.0, 0.0)) === 0.0
+  }
 
-  // property("sumSquares") = forAll(gen(-10.0, 10.0)) { g =>
-  //   sumSquares(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   sumSquares(g) == Some(0.0)
-  // }
+  property("vincent") = forAll(genNEL(0.25, 10.0)) { g =>
+    vincent(g) >= -g.length + 0.0
+  } && forAll(genConst(7.70628098)) { g =>
+    vincent(g) ~ (-g.length + 0.0, epsilon(8))
+  }
 
-  // property("sumDifferentPowers") = forAll(gen(-1.0, 1.0)) { g =>
-  //   sumDifferentPowers(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   sumDifferentPowers(g) == Some(0.0)
-  // }
+  property("wolfe") = forAll(gen3(0.0, 2.0)) { g =>
+    wolfe(g) >= 0.0
+  } && wolfe((0.0, 0.0, 0.0)) === 0.0
 
-  // property("styblinksiTang") = forAll(gen(-5.0, 5.0)) { g =>
-  //   styblinksiTang(g) >= -39.16616570377142 * g.length
-  // } && forAll(genConst(-2.90353401818596)) { g => (!g.isEmpty) ==>
-  //   (styblinksiTang(g) ~ (-39.16616570377142 * g.length, epsilon(10)))
-  // }
+  property("wood") = forAll(gen4(-100.0, 100.0)) { g =>
+    wood(g) >= 0.0
+  } && wood((1.0, 1.0, 1.0, 1.0)) === 0.0
 
-  // property("threeHumpCamelback") = forAll(genN(2, -5.0, 5.0)) { g =>
-  //   threeHumpCamelback(g) >= 0.0
-  // } && threeHumpCamelback(List(0.0, 0.0)) == Some(0.0)
+  property("zakharov") = forAll(genNEL(-5.00, 10.0)) { g =>
+    zakharov(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    zakharov(g) === 0.0
+  }
 
-  // property("trecanni") = forAll(gen(-5.0, 5.0)) { g =>
-  //   trecanni(g) >= 0.0
-  // } && {
-  //   trecanni(List(0.0, 0.0)) == Some(0.0) &&
-  //   trecanni(List(-2.0, 0.0)) == Some(0.0)
-  // }
-
-  // property("vincent") = forAll(gen(0.25, 10.0)) { g =>
-  //   vincent(g) >= -g.length + 0.0
-  // } && forAll(genConst(7.70628098)) { g =>
-  //   debug(vincent[Double], g)
-  //   vincent(g) ~ (-g.length + 0.0, epsilon(8))
-  // }
-
-  // property("wolfe") = forAll(genN(3, 0.0, 2.0)) { g =>
-  //   wolfe(g) >= 0.0
-  // } && wolfe(zero) == Some(0.0)
-
-  // property("wood") = forAll(genN(4, -100.0, 100.0)) { g =>
-  //   wood(g) >= 0.0
-  // } && wood(List(1.0, 1.0, 1.0, 1.0)) == Some(0.0)
-
-  // property("yaoLiu") = forAll(gen(-10.0, 10.0)) { g =>
-  //   yaoLiu(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   yaoLiu(g) ~ 0.0
-  // }
-
-  // property("zakharov") = forAll(gen(-5.00, 10.0)) { g =>
-  //   zakharov(g) >= 0.0
-  // } && forAll(genConst(0.0)) { g =>
-  //   zakharov(g) == Some(0.0)
-  // }
-
-  // property("zettle") = forAll(genArbN(2)) { g =>
-  //   zettle(g) >= -0.0037912371501199
-  // } && zettle(List(-0.0299, 0.0)) == Some(-0.0037912371501199)
+  property("zettle") = forAll(gen2(-1.0, 5.0)) { g =>
+    zettle(g) >= -0.0037912371501199
+  } && zettle((-0.0299, 0.0)) === -0.0037912371501199
 
 }

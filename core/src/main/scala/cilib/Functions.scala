@@ -425,7 +425,7 @@ object Functions {
 
   def hansen[A: Ring : Trig](x: Sized2[A]) = {
     val (x1, x2) = x
-    val t1 = (0 to 4) . map { i => 
+    val t1 = (0 to 4) . map { i =>
       (i + 1) * cos(i * x1 + i + 1)
     }.qsum
     val t2 = (0 to 4).map { j =>
@@ -507,16 +507,6 @@ object Functions {
     val (x1, x2) = x
     (x1 ** 2 + x2 - 11) ** 2 + (x1 + x2 ** 2 - 7) ** 2
   }
-
-  // def holzman[A: Field : Trig](x: Sized3[A])(implicit nr: NRoot[A]) = {
-  //   val (x1, x2, x3) = x
-  //   val ts = for { i <- 0 to 99
-  //     ui = 25.0 + ((-50.0 * log(0.01 * (i + 1))) ** (2.0 / 3.0))
-  //     t1 = exp(-nr.fpow(ui - x2, x3) / x1)
-  //     t2 = 0.01 * (i + 1)
-  //   } yield (t1 - t2)
-  //   ts.qsum
-  // }
 
   def hosaki[A: Field : Trig](x: Sized2[A]) = {
     val (x1, x2) = x
@@ -754,380 +744,305 @@ object Functions {
   def multiModal[F[_]: Foldable1, A: Signed : Monoid](x: F[A])(implicit A: Field[A]) =
     x.foldLeft(A.one)(_ * abs(_)) * x.foldMap(abs(_))
 
-  // // def nastyBenchmark[T: Field](x: Seq[T]) =
-  // //   Some(x.zipWithIndex.map { case(xi, i) => (xi - (i + 1)) ** 2 })
-
-  // // def oddSquare[T: Field : Ordering : Trig](x: Seq[T]) = {
-  // //   val b = List(
-  // //     1.0, 1.3, 0.8, -0.4, -1.3,
-  // //     1.6, -0.2, -0.6, 0.5, 1.4,
-  // //     1.0, 1.3, 0.8, -0.4, -1.3,
-  // //     1.6, -0.2, -0.6, 0.5, 1.4
-  // //   )
-  // // }
-
-  // def parsopoulus[T: Field : Trig](x: Seq[T]) = x match {
-  //   case Seq(x1, x2) => Some((cos(x1) ** 2) + (sin(x2) ** 2))
-  //   case _ => None
-  // }
-
-  // // def paviani[T: Field : NRoot : Trig](x: Seq[T]) =
-  // //   if (x.length == 10) {
-  // //     val t1 = x.map(xi => (log(10 - xi) ** 2) + (log(xi - 2) ** 2)).qsum
-  // //     val t2 = x.map(xi => xi ** 10).qproduct ** 0.2
-  // //     println("Term2: %f".format(t2))
-  // //     Some(t1 - t2)
-  // //   } else None
-
-  // def penalty1[T: Field : Order : Trig](x: Seq[T]) =
-  //   if (x.length >= 2) {
-  //     def u(xi: T, a: Int, k: Int, m: Int) =
-  //       if (xi > a) k * ((xi - a) ** m)
-  //       else if (xi < -a) k * ((-xi - a) ** m)
-  //       else 0.0 * xi
-
-  //     def yi(xi: T) = 1 + ((xi + 1.0) / 4.0)
-
-  //     val term1 = 10 * (sin(pi * yi(x.head)) ** 2)
-  //     val term2 = x.sliding(2).toList.map {
-  //       case Seq(xi, xi1) =>
-  //         val t1 = (yi(xi) - 1.0) ** 2
-  //         val t2 = 1.0 + 10.0 * (sin(pi * yi(xi1)) ** 2)
-  //         t1 * t2
-  //     }.qsum
-  //     val term3 = (yi(x.last) - 1.0) ** 2
-  //     val term4 = x.map(xi => u(xi, 10, 100, 4)).qsum
-
-  //     Some((pi / 30.0) * (term1 + term2 + term3) + term4)
-  //   } else None
-
-  // def penalty2[T: Field : Order : Trig](x: Seq[T]) =
-  //   if (x.length >= 2) {
-  //     def u(xi: T, a: Int, k: Int, m: Int) =
-  //       if (xi > a) k * ((xi - a) ** m)
-  //       else if (xi < -a) k * ((-xi - a) ** m)
-  //       else 0.0 * xi
-
-  //     val term1 = sin(3.0 * pi * x.head) ** 2
-  //     val term2 = x.sliding(2).toList.map {
-  //       case Seq(xi, xi1) =>
-  //         val t1 = (xi - 1.0) ** 2
-  //         val t2 = 1.0 + (sin(3.0 * pi * xi1) ** 2)
-  //         t1 * t2
-  //     }.qsum
-  //     val term3 = ((x.last - 1.0) ** 2) * (1.0 + sin(2.0 * pi * x.last) ** 2)
-  //     val term4 = x.map(xi => u(xi, 5, 100, 4)).qsum
-
-  //     Some(0.1 * (term1 + term2 + term3) + term4)
-  //   } else None
-
-  // def penHolder[T: Field : NRoot : Signed : Trig](x: Seq[T]) = x match {
-  //   case Seq(x1, x2) =>
-  //     val t1 = abs(1 - (sqrt((x1 ** 2) + (x2 ** 2)) / pi))
-  //     val t2 = cos(x1) * cos(x2)
-  //     val expon = abs(exp(t1) * t2) ** -1
-  //     Some(-exp(-expon))
-  //   case _ => None
-  // }
-
-  // def periodic[T: Field : Trig](x: Seq[T]) = {
-  //   val t1 = x.map(xi => sin(xi) ** 2).qsum
-  //   val t2 = 0.1 * exp(-x.map(_ ** 2).qsum)
-  //   Some(1 + t1 - t2)
-  // }
-
-
-  // def powell[T: Field](x: Seq[T]) = x match {
-  //   case Seq(x1, x2, x3, x4) =>
-  //     val t1 = (x3 + 10 * x1) ** 2
-  //     val t2 = 5.0 * ((x2 - x4) ** 2)
-  //     val t3 = (x1 - 2 * x2) ** 4
-  //     val t4 = 10.0 * ((x3 - x4) ** 4)
-  //     Some(t1 + t2 + t3 + t4)
-  //   case _ => None
-  // }
-
-  // def powellSum[T: Ring : Signed](x: Seq[T]) =
-  //   Some(x.zipWithIndex.map {
-  //     case (xi, i) => abs(xi) ** (i + 1)
-  //   }.qsum)
-
-  // def powerSum[T: Ring](x: Seq[T]) =
-  //   if (x.length == 4) {
-  //     val b = List(8, 18, 44, 114)
-
-  //     val terms = b.zipWithIndex.map {
-  //       case (bk, i) =>
-  //         val k = i + 1
-  //         val t = x.map(xi => xi ** k).qsum
-  //         (t - bk) ** 2
-  //     }
-
-  //     Some(terms.qsum)
-  //   } else None
-
-  // def price1[T: Ring : Signed](x: Seq[T]) =
-  //   Some(x.map(xi => (abs(xi) - 5) ** 2).qsum)
-
-  // def price2[T: Field : Trig](x: Seq[T]) =
-  //   Some(1.0 + x.map(xi => sin(xi) ** 2).qsum - 0.1 * exp(-x.map(_ ** 2).qsum))
-
-  // def price3[T: Field](x: Seq[T]) = x match {
-  //   case Seq(x1, x2) =>
-  //     val t1 = 100 * ((x2 - (x1 ** 2)) ** 2)
-  //     val t2 = 6 * ((6.4 * ((x2 - 0.5) ** 2) - x1 - 0.6) ** 2)
-  //     Some(t1 + t2)
-  //   case _ => None
-  // }
-
-  // def qing[T: Field](x: Seq[T]) =
-  //   Some(x.zipWithIndex.map {
-  //     case (xi, i) => ((xi ** 2) - (i + 1.0)) ** 2
-  //   }.qsum)
-
-  // def quadratic[T: Field](x: Seq[T]) = x match {
-  //   case Seq(x1, x2) =>
-  //     val t1 = -3803.84 - 138.08 * x1
-  //     val t2 = -232.92 * x2 + 128.08 * (x1 ** 2)
-  //     val t3 = 203.64 * (x2 ** 2) + 182.25 * x1 * x2
-  //     Some(t1 + t2 + t3)
-  //   case _ => None
-  // }
-
-  // def quadric[T: Ring](x: Seq[T]) = {
-  //   val terms = for (i <- 1 to x.length) yield (x take i).qsum ** 2
-  //   Some(terms.qsum)
-  // }
-
-  // def quintic[T: Field : Signed](x: Seq[T]) = {
-  //   val terms = x.map { xi =>
-  //     (xi ** 5) - 3 * (xi ** 4) + 4 * (xi ** 3) + 2 * (xi ** 2) - 10.0 * xi - 4
-  //   }
-
-  //   Some(abs(terms.qsum))
-  // }
-
-  // def rastrigin[T: Field : IsReal : Trig](x: Seq[T]) =
-  //   Some(10 * x.size + x.map(xi => xi ** 2 - 10 * cos(2 * pi * xi)).qsum)
-
-
-  // // def ripple1[T: Field : Trig](x: Seq[T]) = {
-  // //   val terms = x.map { xi =>
-  // //     val t1 = -2 * (log(((xi - 0.1) / 0.8) ** 2) / log(2))
-  // //     val t2 = sin(5 * pi * xi) ** 6
-  // //     val t3 = 0.1 * (cos(500 * pi * xi) ** 2)
-  // //     -exp(t1 * (t2 + t3))
-  // //   }
-  // //   Some(terms.qsum)
-  // // }
-
-  // def rosenbrock[T: Ring](x: Seq[T]) =
-  //   Some((0 until x.length - 1).map(i => {
-  //     val t1 = 100 * (x(i + 1) - x(1) ** 2) ** 2
-  //     val t2 = (x(1) - 1) ** 2
-  //     t1 + t2
-  //   }).qsum)
-
-  // def rotatedEllipse1[T: Field](x: Seq[T]) =
-  //   if (x.length >= 2) {
-  //     def g(l: Seq[T]) = l match {
-  //       case Seq(x1, x2) =>
-  //         (7 * (x1 ** 2)) - (6 * sqrt(3.0) * x1 * x2) + (13 * (x2 ** 2))
-  //     }
-  //     Some(x.sliding(2).toList.map(g(_)).qsum)
-  //   } else None
-
-  // def rotatedEllipse2[T: Ring](x: Seq[T]) =
-  //   if (x.length >= 2) {
-  //     def g(l: Seq[T]) = l match {
-  //       case Seq(x1, x2) => (x1 ** 2) - (x1 * x2) + (x2 ** 2)
-  //     }
-  //     Some(x.sliding(2).toList.map(g(_)).qsum)
-  //   } else None
-
-  // // def rump[T: Field](x: Seq[T]) =
-  // //   if (x.length >= 2) {
-  // //     val terms = x.sliding(2).toList.map {
-  // //       case Seq(xi, xi1) =>
-  // //         val t1 = (333.75 - xi ** 2) * (xi1 ** 6)
-  // //         val t2 = (xi ** 2) * (11 * (xi ** 2) * (xi1 ** 2) -
-  // //           121 * (xi1 ** 4) - 2)
-  // //         val t3 = 5.5 * (xi1 ** 8)
-  // //         val t4 = xi / (2 * xi1)
-  // //         t1 + t2 + t3 + t4
-  // //     }
-
-  // //     Some(terms.qsum)
-  // //   } else None
-
-  // def salomon[T: Field : NRoot : Trig](x: Seq[T]) =
-  //   spherical(x).map(sum => -cos(2 * pi * sqrt(sum)) + (0.1 * sqrt(sum)) + 1)
-
-  // // def schaffer1[T: Field : Trig](x: Seq[T]) =
-  // //   if (x.length >= 2) {
-  // //     val terms = x.sliding(2).toList.map {
-  // //       case Seq(xi, xi1) =>
-  // //         val t1 = (xi ** 2) - (xi1 ** 2)
-  // //         val t2 = (xi ** 2) + (xi1 ** 2)
-  // //         val t3 = (sin((t1) ** 2) ** 2) - 0.5
-  // //         val t4 = (1 + 0.001 * t2) ** 2
-  // //         0.5 + (t3 / t4)
-  // //     }
-
-  // //     Some(terms.qsum)
-  // //   } else None
-
-  // // def schaffer2[T: Field : Signed : Trig](x: Seq[T]) =
-  // //   if (x.length >= 2) {
-  // //     val terms = x.sliding(2).toList.map {
-  // //       case Seq(xi, xi1) =>
-  // //         val t1 = (xi ** 2) + (xi1 ** 2)
-  // //         val t2 = (sin((t1) ** 2) ** 2) - 0.5
-  // //         val t3 = (1 + 0.001 * t1) ** 2
-  // //         0.5 + (t2 / t3)
-  // //     }
-
-  // //     Some(terms.qsum)
-  // //   } else None
-  // // def schaffer2[T: Field : NRoot](x: Seq[T]) = x match {
-  // //   case Seq(_, _) => spherical(x).map(sum =>
-  // //     (sum ** 0.25) * (50 * (sum ** 0.1) + 1))
-  // //   case _ => None
-  // // }
-
-  // // def schmidtVetters[T: Field : Trig](x: Seq[T]) = x match {
-  // //   case Seq(x1, x2, x3) =>
-  // //     val t1 = 1.0 / (1.0 + (x1 - x2) ** 2)
-  // //     val t2 = sin((pi * x2 + x3) / 2.0)
-  // //     val t3 = exp((((x1 + x2) / x2) - 2.0) ** 2)
-  // //     Some(t1 + t2 + t3)
-  // //   case _ => None
-  // // }
-
-  // def schwefel1[T: Field : NRoot](x: Seq[T]) = {
-  //   val alpha = sqrt(pi)
-  //   spherical(x).map(_ ** alpha)
-  // }
-
-  // def schwefel12[T: Ring](x: Seq[T]) =
-  //   Some(x.zipWithIndex.map { case (xi, i) => x.take(i + 1).qsum ** 2 }.qsum)
-
-  // def schwefel221[T: Ordering : Signed](x: Seq[T]) = maximum(x.map(abs(_)))
-
-  // def schwefel222[T: Ring : Signed](x: Seq[T]) =
-  //   Some(x.map(abs(_)).qsum + x.map(abs(_)).qproduct)
-
-  // def schwefel223[T: Ring](x: Seq[T]) = Some(x.map(_ ** 10).qsum)
-
-  // def schwefel226[T: Field : NRoot : Signed : Trig](x: Seq[T]) =
-  //   Some(418.9829 * x.length - x.map(xi => xi * sin(sqrt(abs(xi)))).qsum)
-
-  // def schwefel24[T: Field](x: Seq[T]) = x match {
-  //   case x1 :: _ =>
-  //     val terms = x.map(xi => ((xi - 1) ** 2) + ((x1 - xi) ** 2))
-  //     Some(terms.qsum)
-  //   case _ => None
-  // }
-
-  // def schwefel26[T: Order : Ring : Signed](x: Seq[T]) = x match {
-  //   case Seq(x1, x2) => Some(max(abs(x1 + 2 * x2 - 7), abs(2 * x1 + x2 - 5)))
-  //   case _ => None
-  // }
-
-  // def shubert[T: Ring : Trig](x: Seq[T]) =
-  //   if (x.length == 2)
-  //     Some(x.map(xi => (1 to 5).map(j => j * cos((j + 1) * xi + j)).qsum).qproduct)
-  //   else None
-
-  // def sixHumpCamelback[T: Field](x: Seq[T]) = x match {
-  //   case Seq(x1, x2) =>
-  //     val tX1 = 4 * (x1 ** 2) - 2.1 * (x1 ** 4) + (1.0 / 3.0) * (x1 ** 6)
-  //     val tX2 = x1 * x2 - 4 * (x2 ** 2) + 4 * (x2 ** 4)
-  //     Some(tX1 + tX2)
-  //   case _ => None
-  // }
-
-  // def spherical[T: Ring](x: Seq[T]) = Some(x.map(_ ** 2).qsum)
-
-  // def step1[T: IsReal : Ring : Signed](x: Seq[T]) =
-  //   Some(x.map(xi => floor(abs(xi))).qsum)
-
-  // def step2[T: Field : IsReal](x: Seq[T]) =
-  //   Some(x.map(xi => (floor(xi) + 0.5) ** 2).qsum)
-
-  // def step3[T: IsReal : Ring](x: Seq[T]) =
-  //   Some(x.map(xi => floor(xi ** 2)).qsum)
-
-  // def sumSquares[T: Ring](x: Seq[T]) =
-  //   Some(x.zipWithIndex.map { case (xi, i) => (i + 1) * (xi ** 2) }.qsum)
-
-  // def sumDifferentPowers[T: Ring : Signed](x: Seq[T]) =
-  //   Some(x.zipWithIndex.map { case (xi, i) => abs(xi) ** (i + 2) }.qsum)
-
-  // def styblinksiTang[T: Field](x: Seq[T]) = {
-  //   val terms = x.map(xi => (xi ** 4) - 16 * (xi ** 2) + 5 * xi)
-  //   Some(0.5 * terms.qsum)
-  // }
-
-  // def threeHumpCamelback[T: Field : IsReal](x: Seq[T]) = x match {
-  //   case Seq(x1, x2) =>
-  //     Some(2 * (x1 ** 2) - 1.05 * (x1 ** 4) +
-  //       ((x1 ** 6) / 6) + x1 * x2 + x2 ** 2)
-  //   case _ => None
-  // }
-
-  // def trecanni[T: Ring](x: Seq[T]) = x match {
-  //   case Seq(x1, x2) =>
-  //     Some(x1 ** 4 + 4 * (x1 ** 3) + 4 * (x1 ** 2) + (x2 ** 2))
-  //   case _ => None
-  // }
-
-  // def vincent[T: Field : Trig](x: Seq[T]) =
-  //   Some(-x.map(xi => sin(10.0 * log(xi))).qsum)
-
-  // def weierstrass[T: Field : Trig](x: Seq[T]) = {
-  //   val a = 0.5
-  //   val b = 3.0
-  //   val kmax = 20
-  //   val constant = (for { k <- 0 to kmax
-  //     t1 = a ** k
-  //     t2 = cos(2 * pi * (b ** k) * 0.5)
-  //   } yield t1 * t2).qsum
-
-  //   val factor1 = x.map(xi => (for { k <- 0 to kmax
-  //     t1 = a ** k
-  //     t2 = cos(2 * pi * (b ** k) * (xi + 0.5))
-  //   } yield t1 * t2).qsum).qsum
-
-  //   factor1 - x.length * constant
-  // }
-
-  // def wolfe[T: Field : NRoot](x: Seq[T]) = x match {
-  //   case Seq(x1, x2, x3) =>
-  //     Some((4.0 / 3.0) * (((x1 ** 2) + (x2 ** 2)) ** 0.75) + x3)
-  //   case _ => None
-  // }
-
-  // def wood[T: Field](x: Seq[T]) = x match {
-  //   case Seq(x1, x2, x3, x4) =>
-  //     val t1 = 100 * (((x1 ** 2) - x2) ** 2)
-  //     val t2 = (x1 - 1) ** 2 + (x3 - 1) ** 2
-  //     val t3 = 90 * ((x3 ** 2 - x4) ** 2)
-  //     val t4 = 10.1 * ((x2 - 1) ** 2)
-  //     val t5 = (x4 - 1) ** 2 + 19.8 * (x2 - 1) * (x4 - 1)
-  //     Some(t1 + t2 + t3 + t4 + t4)
-  //   case _ => None
-  // }
-
-  // def yaoLiu[T: Ordering : Signed](x: Seq[T]) = maximum(x.map(abs(_)))
-
-  // def zakharov[T: Field : IsReal](x: Seq[T]) = {
-  //   val t = x.zipWithIndex.map { case (xi, i) => 0.5 * i * xi }.qsum
-  //   spherical(x).map(sum => sum + t ** 2 + t ** 4)
-  // }
-
-  // def zettle[T: Field](x: Seq[T]) = x match {
-  //   case Seq(x1, x2) => Some((x1 ** 2 + x2 ** 2 - 2 * x1) ** 2 + x1 / 4.0)
-  //   case _           => None
-  // }
+  def parsopoulus[A: Field : Trig](x: Sized2[A]) = {
+    val (x1, x2) = x
+    (cos(x1) ** 2) + (sin(x2) ** 2)
+  }
+
+  def penalty1[F[_]: Foldable, A: Field : Order : Trig : Monoid](x: Sized2And[F, A]) = {
+    def u(xi: A, a: Int, k: Int, m: Int) =
+      if (xi > a) k * ((xi - a) ** m)
+      else if (xi < -a) k * ((-xi - a) ** m)
+      else 0.0 * xi
+
+    def yi(xi: A) = 1 + ((xi + 1.0) / 4.0)
+
+    val xs = (x.a :: x.b :: x.rest.toList)
+    val term1 = 10 * (sin(pi * yi(xs.head)) ** 2)
+    val term2 = xs.sliding(2).toList.foldMap {
+      case Seq(xi, xi1) =>
+        val t1 = (yi(xi) - 1.0) ** 2
+        val t2 = 1.0 + 10.0 * (sin(pi * yi(xi1)) ** 2)
+        t1 * t2
+    }
+    val term3 = (yi(xs.last) - 1.0) ** 2
+    val term4 = xs.foldMap(xi => u(xi, 10, 100, 4))
+
+    (pi / 30.0) * (term1 + term2 + term3) + term4
+  }
+
+  def penalty2[F[_]: Foldable, A: Field : Order : Trig : Monoid](x: Sized2And[F, A]) = {
+    def u(xi: A, a: Int, k: Int, m: Int) =
+      if (xi > a) k * ((xi - a) ** m)
+      else if (xi < -a) k * ((-xi - a) ** m)
+      else 0.0 * xi
+
+    val xs = (x.a :: x.b :: x.rest.toList)
+    val term1 = sin(3.0 * pi * xs.head) ** 2
+    val term2 = xs.sliding(2).toList.foldMap {
+      case Seq(xi, xi1) =>
+        val t1 = (xi - 1.0) ** 2
+        val t2 = 1.0 + (sin(3.0 * pi * xi1) ** 2)
+        t1 * t2
+    }
+
+    val term3 = ((xs.last - 1.0) ** 2) * (1.0 + sin(2.0 * pi * xs.last) ** 2)
+    val term4 = xs.foldMap(xi => u(xi, 5, 100, 4))
+
+    0.1 * (term1 + term2 + term3) + term4
+  }
+
+  def penHolder[A: Field : NRoot : Signed : Trig](x: Sized2[A]) = {
+    val (x1, x2) = x
+    val t1 = abs(1 - (sqrt((x1 ** 2) + (x2 ** 2)) / pi))
+    val t2 = cos(x1) * cos(x2)
+    val expon = abs(exp(t1) * t2) ** -1
+    -exp(-expon)
+  }
+
+  def periodic[F[_]: Foldable1, A: Field : Trig : Monoid](x: F[A]) = {
+    val t1 = x.foldMap(sin(_) ** 2)
+    val t2 = 0.1 * exp(-x.foldMap(_ ** 2))
+    1 + t1 - t2
+  }
+
+  def powell[A: Field](x: Sized4[A]) = {
+    val (x1, x2, x3, x4) = x
+    val t1 = (x3 + 10 * x1) ** 2
+    val t2 = 5.0 * ((x2 - x4) ** 2)
+    val t3 = (x1 - 2 * x2) ** 4
+    val t4 = 10.0 * ((x3 - x4) ** 4)
+    t1 + t2 + t3 + t4
+  }
+
+  def powellSum[F[_]: Foldable1, A: Ring : Signed : Monoid](x: F[A]) =
+    x.toList.zipWithIndex.foldMap {
+      case (xi, i) => abs(xi) ** (i + 1)
+    }
+
+  def powerSum[A: Ring : Monoid](x: Sized4[A]) = {
+    val b = List(8, 18, 44, 114)
+    val (x1, x2, x3, x4) = x
+    val xs = List(x1, x2, x3, x4)
+
+    b.zipWithIndex.foldMap {
+      case (bk, i) =>
+        val k = i + 1
+        val t = xs.foldMap(xi => xi ** k)
+        (t - bk) ** 2
+    }
+  }
+
+  def price1[F[_]: Foldable1, A: Ring : Signed : Monoid](x: F[A]) =
+    x.foldMap(xi => (abs(xi) - 5) ** 2)
+
+  def price2[F[_]: Foldable1, A: Field : Trig : Monoid](x: F[A]) =
+    1.0 + x.foldMap(xi => sin(xi) ** 2) - 0.1 * exp(-x.foldMap(_ ** 2))
+
+  def qing[F[_]: Foldable1, A: Field : Monoid](x: F[A]) =
+    x.toList.zipWithIndex.foldMap {
+      case (xi, i) => ((xi ** 2) - (i + 1.0)) ** 2
+    }
+
+  def quadratic[A: Field](x: Sized2[A]) = {
+    val (x1, x2) = x
+    val t1 = -3803.84 - 138.08 * x1
+    val t2 = -232.92 * x2 + 128.08 * (x1 ** 2)
+    val t3 = 203.64 * (x2 ** 2) + 182.25 * x1 * x2
+    t1 + t2 + t3
+  }
+
+  def quadric[F[_]: Foldable1, A: Ring : Monoid](x: F[A]) =
+    (1 to x.length).toList.foldMap { i =>
+      (x.toList take i).foldMap(xi => xi) ** 2
+    }
+
+  def quintic[F[_]: Foldable1, A: Field : Signed : Monoid](x: F[A]) =
+    abs(x.foldMap { xi =>
+      (xi ** 5) - 3 * (xi ** 4) + 4 * (xi ** 3) + 2 * (xi ** 2) - 10.0 * xi - 4
+    })
+
+  def rastrigin[F[_]: Foldable1, A: Field : IsReal : Trig : Monoid](x: F[A]) =
+    10 * x.length + x.foldMap(xi => xi ** 2 - 10 * cos(2 * pi * xi))
+
+  def rosenbrock[F[_]: Foldable, A: Ring : Monoid](x: Sized2And[F, A]) =
+    (x.a :: x.b :: x.rest.toList).sliding(2).toList.foldMap {
+      case Seq(xi, xi1) => 100 * ((xi1 - (xi ** 2)) ** 2) + ((xi - 1) ** 2)
+    }
+
+  def rotatedEllipse1[F[_]: Foldable, A: Field : Monoid](x: Sized2And[F, A]) =
+    (x.a :: x.b :: x.rest.toList).sliding(2).toList.foldMap {
+      case Seq(x1, x2) =>
+        (7 * (x1 ** 2)) - (6 * sqrt(3.0) * x1 * x2) + (13 * (x2 ** 2))
+    }
+
+  def rotatedEllipse2[F[_]: Foldable, A: Ring : Monoid](x: Sized2And[F, A]) =
+    (x.a :: x.b :: x.rest.toList).sliding(2).toList.foldMap {
+      case Seq(x1, x2) => (x1 ** 2) - (x1 * x2) + (x2 ** 2)
+    }
+
+  def salomon[F[_]: Foldable1,  A: Field : NRoot : Trig : Monoid](x: F[A]) = {
+    val ss = sqrt(spherical(x))
+    -cos(2 * pi * ss) + (0.1 * ss) + 1
+  }
+
+  def schaffer1[F[_]: Foldable, A: Field : Trig : Monoid](x: Sized2And[F, A]) =
+    (x.a :: x.b :: x.rest.toList).sliding(2).toList.foldMap {
+      case Seq(xi, xi1) =>
+        val t1 = (xi ** 2) + (xi1 ** 2)
+        val t2 = (xi ** 2) + (xi1 ** 2)
+        val t3 = (sin((t1) ** 2) ** 2) - 0.5
+        val t4 = (1 + 0.001 * t2) ** 2
+        0.5 + (t3 / t4)
+    }
+
+  def schaffer2[F[_]: Foldable, A: Field : Trig : Monoid](x: Sized2And[F, A]) =
+    (x.a :: x.b :: x.rest.toList).sliding(2).toList.foldMap {
+      case Seq(xi, xi1) =>
+        val t1 = (xi ** 2) - (xi1 ** 2)
+        val t2 = (xi ** 2) + (xi1 ** 2)
+        val t3 = (sin((t1) ** 2) ** 2) - 0.5
+        val t4 = (1 + 0.001 * t2) ** 2
+        0.5 + (t3 / t4)
+    }
+
+  def schaffer3[F[_]: Foldable, A: Field : Signed : Trig : Monoid](x: Sized2And[F, A]) =
+    (x.a :: x.b :: x.rest.toList).sliding(2).toList.foldMap {
+      case Seq(xi, xi1) =>
+        val t1 = cos(abs((xi ** 2) - (xi1 ** 2)))
+        val t2 = (xi ** 2) + (xi1 ** 2)
+        val t3 = (sin((t1) ** 2) ** 2) - 0.5
+        val t4 = (1 + 0.001 * t2) ** 2
+        0.5 + (t3 / t4)
+    }
+
+  def schaffer4[F[_]: Foldable, A: Field : Trig : Monoid](x: Sized2And[F, A]) =
+    (x.a :: x.b :: x.rest.toList).sliding(2).toList.foldMap {
+      case Seq(xi, xi1) =>
+        val t1 = sin((xi ** 2) - (xi1 ** 2))
+        val t2 = (xi ** 2) + (xi1 ** 2)
+        val t3 = (cos((t1) ** 2) ** 2) - 0.5
+        val t4 = (1 + 0.001 * t2) ** 2
+        0.5 + (t3 / t4)
+    }
+
+  def schwefel1[F[_]: Foldable1, A: Field : NRoot : Monoid](x: F[A]) =
+    x.foldMap(_ ** 2) ** sqrt(pi)
+
+  def schwefel12[F[_]: Foldable1, A: Ring : Monoid](x: F[A]) =
+    x.toList.zipWithIndex.foldMap {
+      case (xi, i) => x.toList.take(i + 1).foldMap(xi => xi) ** 2
+    }
+
+  def schwefel221[F[_]: Foldable, A: Order : Signed](x: Sized1And[F, A]) =
+    x.foldLeft(abs(x.head)) { (xi, xi1) => spire.math.max(abs(xi), abs(xi1)) }
+
+  def schwefel222[F[_]: Foldable1 : Functor, A: Signed : Monoid](x: F[A])(implicit A: Ring[A]) =
+    x.foldMap(abs(_)) + x.map(abs(_)).foldLeft(A.one)(_ * _)
+
+  def schwefel223[F[_]: Foldable1, A: Ring : Monoid](x: F[A]) = x.foldMap(_ ** 10)
+
+  def schwefel226[F[_]: Foldable1, A: Field : NRoot : Signed : Trig : Monoid](x: F[A]) =
+    418.9829 * x.length - x.foldMap(xi => xi * sin(sqrt(abs(xi))))
+
+  def schwefel24[F[_]: Foldable, A: Field : Monoid](x: Sized1And[F, A]) =
+    x.foldMap(xi => ((x.head - 1) ** 2) + ((x.head - xi) ** 2))
+
+  def schwefel26[A: Order : Ring : Signed](x: Sized2[A]) = {
+    val (x1, x2) = x
+    spire.math.max(abs(x1 + 2 * x2 - 7), abs(2 * x1 + x2 - 5))
+  }
+
+  def shubert[F[_]: Foldable, A: Field : Trig : Monoid](x: Sized2[A]) = {
+    val (x1, x2) = x
+    val t1 = (1 to 5).toList.foldMap(j => j * cos((j + 1) * x1 + j))
+    val t2 = (1 to 5).toList.foldMap(j => j * cos((j + 1) * x2 + j))
+    t1 * t2
+  }
+
+  def sixHumpCamelback[A: Field](x: Sized2[A]) = {
+    val (x1, x2) = x
+    val tX1 = 4 * (x1 ** 2) - 2.1 * (x1 ** 4) + (1.0 / 3.0) * (x1 ** 6)
+    val tX2 = x1 * x2 - 4 * (x2 ** 2) + 4 * (x2 ** 4)
+    tX1 + tX2
+  }
+
+  def spherical[F[_]: Foldable1, A: Ring : Monoid](x: F[A]) = x.foldMap(_ ** 2)
+
+  def step1[F[_]: Foldable1, A: IsReal : Ring : Signed : Monoid](x: F[A]) =
+    x.foldMap(xi => floor(abs(xi)))
+
+  def step2[F[_]: Foldable1, A: Field : IsReal : Monoid](x: F[A]) =
+    x.foldMap(xi => (floor(xi) + 0.5) ** 2)
+
+  def step3[F[_]: Foldable1, A: IsReal : Ring : Monoid](x: F[A]) =
+    x.foldMap(xi => floor(xi ** 2))
+
+  def sumSquares[F[_]: Foldable1, A: Ring : Monoid](x: F[A]) =
+    x.toList.zipWithIndex.foldMap { case (xi, i) => (i + 1) * (xi ** 2) }
+
+  def sumDifferentPowers[F[_]: Foldable1, A: Ring : Signed : Monoid](x: F[A]) =
+    x.toList.zipWithIndex.foldMap { case (xi, i) => abs(xi) ** (i + 2) }
+
+  def styblinksiTang[F[_]: Foldable1, A: Field : Monoid](x: F[A]) =
+    0.5 * x.foldMap(xi => (xi ** 4) - 16 * (xi ** 2) + 5 * xi)
+
+  def threeHumpCamelback[A: Field : IsReal](x: Sized2[A]) = {
+    val (x1, x2) = x
+    2 * (x1 ** 2) - 1.05 * (x1 ** 4) + ((x1 ** 6) / 6) + x1 * x2 + x2 ** 2
+  }
+
+  def trecanni[A: Ring](x: Sized2[A]) = {
+    val (x1, x2) = x
+    x1 ** 4 + 4 * (x1 ** 3) + 4 * (x1 ** 2) + (x2 ** 2)
+  }
+
+  def vincent[F[_]: Foldable1, A: Field : Trig : Monoid](x: F[A]) =
+    -x.foldMap(xi => sin(10.0 * log(xi)))
+
+  def weierstrass[F[_]: Foldable1, A: Field : Trig : Monoid](x: F[A]) = {
+    val a = 0.5
+    val b = 3.0
+    val kmax = 20
+    val constant = (0 to kmax).toList.foldMap { k =>
+      val t1 = a ** k.toDouble
+      val t2 = cos(2 * pi * (b ** k.toDouble) * 0.5)
+      t1 * t2
+    }
+
+    val factor1 = x.foldMap { xi =>
+      (0 to kmax).toList.foldMap { k =>
+        val t1 = a ** k.toDouble
+        val t2 = cos(2 * pi * (b ** k.toDouble) * (xi + 0.5))
+        t1 * t2
+      }
+    }
+
+    factor1 - x.length * constant
+  }
+
+  def wolfe[A: Field : NRoot](x: Sized3[A]) = {
+    val (x1, x2, x3) = x
+    (4.0 / 3.0) * (((x1 ** 2) + (x2 ** 2)) ** 0.75) + x3
+  }
+
+  def wood[A: Field](x: Sized4[A]) = {
+    val (x1, x2, x3, x4) = x
+    val t1 = 100 * (((x1 ** 2) - x2) ** 2)
+    val t2 = (x1 - 1) ** 2 + (x3 - 1) ** 2
+    val t3 = 90 * ((x3 ** 2 - x4) ** 2)
+    val t4 = 10.1 * ((x2 - 1) ** 2)
+    val t5 = (x4 - 1) ** 2 + 19.8 * (x2 - 1) * (x4 - 1)
+    t1 + t2 + t3 + t4 + t4
+  }
+
+  def zakharov[F[_]: Foldable1, A: Field : IsReal : Monoid](x: F[A]) = {
+    val t = x.toList.zipWithIndex.foldMap { case (xi, i) => 0.5 * i * xi }
+    spherical(x) + (t ** 2) + (t ** 4)
+  }
+
+  def zettle[A: Field](x: Sized2[A]) = {
+    val (x1, x2) = x
+    (x1 ** 2 + x2 ** 2 - 2 * x1) ** 2 + x1 / 4.0
+  }
 }

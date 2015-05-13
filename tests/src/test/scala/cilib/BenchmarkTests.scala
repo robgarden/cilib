@@ -93,6 +93,33 @@ object BenchmarksTest extends Properties("Benchmarks") {
     beale(g) >= 0.0
   } && beale((3.0, 0.5)) === 0.0
 
+  property("biggsEXP2") = forAll(gen2(0.0, 20.0)) { g =>
+    biggsEXP2(g) >= 0.0
+  } && biggsEXP2((1.0, 10.0)) === 0.0
+
+  property("biggsEXP3") = forAll(gen3(0.0, 20.0)) { g =>
+    biggsEXP3(g) >= 0.0
+  } && biggsEXP3((1.0, 10.0, 5.0)) === 0.0
+
+  property("biggsEXP4") = forAll(gen4(0.0, 20.0)) { g =>
+    biggsEXP4(g) >= 0.0
+  } && biggsEXP4((1.0, 10.0, 1.0, 5.0)) === 0.0
+
+  property("biggsEXP5") = forAll(gen5(0.0, 20.0)) { g =>
+    biggsEXP5(g) >= 0.0
+  } && biggsEXP5((1.0, 10.0, 1.0, 5.0, 4.0)) === 0.0
+
+  property("biggsEXP6") = forAll(gen6(-20.0, 20.0)) { g =>
+    biggsEXP6(g) >= 0.0
+  } && biggsEXP6((1.0, 10.0, 1.0, 5.0, 4.0, 3.0)) === 0.0
+
+  property("bird") = forAll(gen2(-2.0 * pi, 2.0 * pi)) { g =>
+    bird(g) >= -106.764537
+  } && {
+    bird((4.70104, 3.15294)) ~ (-106.764537, epsilonF(5)) &&
+    bird((-1.58214, -3.13024)) ~ (-106.764537, epsilonF(5))
+  }
+
   property("bohachevsky") = forAll(gen2(-100.0, 100.0)) { g =>
     bohachevsky1(g) >= 0.0 &&
     bohachevsky2(g) >= 0.0 &&
@@ -110,16 +137,31 @@ object BenchmarksTest extends Properties("Benchmarks") {
     booth((1.0, 3.0)) === 0.0
   }
 
+  val genBoxBettsQuadraticSum =
+    (Gen.choose(0.9, 1.2) |@| Gen.choose(9.0, 11.2) |@| Gen.choose(0.9, 1.2)) { Tuple3.apply }
+
+  property("boxBettsQuadraticSum") = forAll(genBoxBettsQuadraticSum) { g =>
+    boxBettsQuadraticSum(10)(g) >= 0.0
+  } && {
+    boxBettsQuadraticSum(10)((1.0, 10.0, 1.0)) === 0.0
+  }
+
   val genBraninRCOS =
     (Gen.choose(-5.0, 10.0) |@| Gen.choose(0.0, 15.0)) { Tuple2.apply }
 
   property("braninRCOS1") = forAll(genBraninRCOS) { g =>
     braninRCOS1(g) >= 0.3978874 - epsilon
-  } && accurate(braninRCOS1((-pi, 12.275)), 0.3978874, epsilonF(5))
+  } && braninRCOS1((-pi, 12.275)) ~ (0.3978874, epsilonF(5))
+
+  property("braninRCOS2") = forAll(gen2(-5.0, 15.0)) { g =>
+    braninRCOS2(g) >= 5.559037
+  } && {
+    braninRCOS2((-3.2, 12.53)) ~ (5.559037, epsilonF(6))
+  }
 
   property("brent") = forAll(genNEL(-10.0, 10.0)) { g =>
     brent(g) >= 0.0
-  } && accurate(brent(NonEmptyList.nels(-10.0, -10.0, -10.0)), 0.0, epsilon)
+  } && brent(NonEmptyList.nels(-10.0, -10.0, -10.0)) ~ (0.0, epsilon)
 
   property("brown") = forAll(gen2And(-1.0, 1.0)) { g =>
     brown(g) >= 0.0
@@ -147,7 +189,7 @@ object BenchmarksTest extends Properties("Benchmarks") {
 
   property("chichinadze") = forAll(gen2(-30.0, 30.0)) { g =>
     chichinadze(g) >= -43.3159
-  } && accurate(chichinadze((5.90133, 0.5)), -43.3159, epsilonF(4))
+  } && chichinadze((5.90133, 0.5)) ~ (-43.3159, epsilonF(4))
 
   property("chungReynolds") = forAll(genNEL(-100.0, 100.0)) { g =>
     chungReynolds(g) >= 0.0
@@ -166,14 +208,14 @@ object BenchmarksTest extends Properties("Benchmarks") {
 
   property("cosineMixture") = forAll(genNEL(-1.0, 1.0)) { g =>
     cosineMixture(g) >= -0.1 * g.length
-  } && accurate(cosineMixture(zero3), -0.1 * zero3.length, epsilonF(5))
+  } && cosineMixture(zero3) ~ (-0.1 * zero3.length, epsilonF(5))
 
   property("cross") = forAll(genNEL(-10.0, 10.0)) { g =>
     crossInTray(g) >= -2.11 &&
     crossLegTable(g) >= -1.0 &&
     crossCrowned(g) >= -0.0001
   } && {
-    accurate(crossInTray(NonEmptyList.nels(1.349406685353340,1.349406608602084)), -2.06261218, epsilonF(6)) &&
+    crossInTray(NonEmptyList.nels(1.349406685353340,1.349406608602084)) ~ (-2.06261218, epsilonF(6)) &&
     crossLegTable(zero3) === -1.0 &&
     crossCrowned(zero3) === 0.0001
   }
@@ -194,7 +236,9 @@ object BenchmarksTest extends Properties("Benchmarks") {
   }
 
   property("damavandi") = forAll(gen2(0.0, 14.0)) { g =>
-    damavandi(g) >= 0.0
+    damavandi(g).forall(_ >= 0.0)
+  } && {
+    damavandi((2.0, 2.0)) === None
   }
 
   property("deb") = forAll(genNEL(0.0, 1.0)) { g =>
@@ -235,7 +279,11 @@ object BenchmarksTest extends Properties("Benchmarks") {
 
   property("dixonPrice") = forAll(gen2And(-10.0, 10.0)) { g =>
     dixonPrice(g) >= 0.0
-  } && accurate(dixonPrice(Sized2And(1.0, 1.0 / sqrt(2), Nil)), 0.0, epsilon)
+  } && dixonPrice(Sized2And(1.0, 1.0 / sqrt(2), Nil)) ~ (0.0, epsilon)
+
+  property("dolan") = forAll(gen5(-100.0, 100.0)) { g =>
+    dolan(g) >= 0.0
+  } && dolan((8.39045925, 4.81424707, 7.34574133, 68.88246895, 3.85470806)) ~ (0.0, epsilonF(6))
 
   property("dropWave") = forAll(genNEL(-5.12, 5.12)) { g =>
     dropWave(g) >= -1.0
@@ -251,7 +299,7 @@ object BenchmarksTest extends Properties("Benchmarks") {
 
   property("eggHolder") = forAll(gen2And(-512.0, 512.0)) { g =>
     eggHolder(g) >= -959.64 * (g.rest.length + 2)
-  } && accurate(eggHolder(Sized2And(512.0, 404.2319, Nil)), -959.64, epsilonF(3))
+  } && eggHolder(Sized2And(512.0, 404.2319, Nil)) ~ (-959.64, epsilonF(3))
 
   property("elliptic") = forAll(gen2And(-100.0, 100.0)) { g =>
     elliptic(g) >= 0.0
@@ -259,7 +307,7 @@ object BenchmarksTest extends Properties("Benchmarks") {
 
   property("elAttarVidyasagarDutta") = forAll(gen2(-100.0, 100.0)) { g =>
     elAttarVidyasagarDutta(g) >= 1.712780354
-  } && accurate(elAttarVidyasagarDutta((3.40918683, -2.17143304)), 1.712780354, epsilonF(9))
+  } && elAttarVidyasagarDutta((3.40918683, -2.17143304)) ~ (1.712780354, epsilonF(9))
 
   property("exponential1") = forAll(genNEL(-1.0, 1.0)) { g =>
     exponential1(g) >= -1.0
@@ -303,24 +351,24 @@ object BenchmarksTest extends Properties("Benchmarks") {
   property("hansen") = forAll(gen2(-10.0, 10.0)) { g =>
     hansen(g) >= -176.54
   } && {
-    accurate(hansen((-7.58993, -7.708314)),  -176.54, epsilonF(2)) &&
-    accurate(hansen((-7.58993, -1.425128)),  -176.54, epsilonF(2)) &&
-    accurate(hansen((-7.58993, 4.858057)),   -176.54, epsilonF(2)) &&
-    accurate(hansen((-1.306708, -7.708314)), -176.54, epsilonF(2)) &&
-    accurate(hansen((-1.306708, 4.858057)),  -176.54, epsilonF(2)) &&
-    accurate(hansen((4.976478, 4.858057)),   -176.54, epsilonF(2)) &&
-    accurate(hansen((4.976478, -1.425128)),  -176.54, epsilonF(2)) &&
-    accurate(hansen((4.976478, -7.708314)),  -176.54, epsilonF(2))
+    hansen((-7.58993, -7.708314)) ~ (-176.54, epsilonF(2)) &&
+    hansen((-7.58993, -1.425128)) ~ (-176.54, epsilonF(2)) &&
+    hansen((-7.58993, 4.858057))  ~ (-176.54, epsilonF(2)) &&
+    hansen((-1.306708, -7.708314))~ (-176.54, epsilonF(2)) &&
+    hansen((-1.306708, 4.858057)) ~ (-176.54, epsilonF(2)) &&
+    hansen((4.976478, 4.858057))  ~ (-176.54, epsilonF(2)) &&
+    hansen((4.976478, -1.425128)) ~ (-176.54, epsilonF(2)) &&
+    hansen((4.976478, -7.708314)) ~ (-176.54, epsilonF(2))
   }
 
   property("hartman3") = forAll(gen3(0.0, 1.0)) { g =>
     hartman3(g) >= -3.862782
-  } && accurate(hartman3((0.1140, 0.556, 0.852)), -3.862782, epsilonF(4))
+  } && hartman3((0.1140, 0.556, 0.852)) ~ (-3.862782, epsilonF(4))
 
   property("hartman6") = forAll(gen6(-5.0, 5.0)) { g =>
     hartman6(g) >= -3.32236
-  } && accurate(hartman6((0.201690, 0.150011, 0.476874,
-    0.275332, 0.311652, 0.657301)), -3.32236, epsilonF(5))
+  } && hartman6((0.201690, 0.150011, 0.476874,
+    0.275332, 0.311652, 0.657301)) ~ (-3.32236, epsilonF(5))
 
   property("himmelblau") = forAll(gen2(-6.0, 6.0)) { g =>
     himmelblau(g) >= 0.0
@@ -328,7 +376,7 @@ object BenchmarksTest extends Properties("Benchmarks") {
 
   property("hosaki") = forAll(gen2(0.0, 10.0)) { g =>
     hosaki(g) >= -2.3458
-  } && accurate(hosaki((4.0, 2.0)), -2.3458, epsilonF(4))
+  } && hosaki((4.0, 2.0)) ~ (-2.3458, epsilonF(4))
 
   property("hyperEllipsoid") = forAll(genNEL(-10.0, 10.0)) { g =>
     hyperEllipsoid(g.map(-_)) == hyperEllipsoid(g) &&
@@ -341,15 +389,22 @@ object BenchmarksTest extends Properties("Benchmarks") {
 
   property("jennrichSampson") = forAll(gen2(-1.0, 1.0)) { g =>
     jennrichSampson(g) >= 124.3612
-  } && accurate(jennrichSampson((0.257825, 0.257825)), 124.3612, epsilonF(3))
+  } && jennrichSampson((0.257825, 0.257825)) ~ (124.3612, epsilonF(3))
 
   property("judge") = forAll(gen2(-10.0, 10.0)) { g =>
     judge(g) >= 16.0817307
-  } && accurate(judge((0.86479, 1.2357)), 16.0817307, epsilonF(4))
+  } && judge((0.86479, 1.2357)) ~ (16.0817307, epsilonF(4))
 
   property("katsuura") = forAll(genNEL(0.0, 100.0)) { g =>
     katsuura(g) >= 1.0
   } && katsuura(zero3) === 1.0
+
+  property("keane") = forAll(gen2(0.0, 10.0)) { g =>
+    keane(g) >= -0.673668
+  } && {
+    keane((0.0, 1.39325)) ~ (0.673668, epsilonF(5)) &&
+    keane((1.39325, 0.0)) ~ (0.673668, epsilonF(5))
+  }
 
   property("kowalik") = forAll(gen4(-5.0, 5.0)) { g =>
     kowalik(g) >= 0.0003074861
@@ -424,7 +479,7 @@ object BenchmarksTest extends Properties("Benchmarks") {
     mishra5(g)  >= -0.119829 &&
     mishra8(g)  >= 0.0
   } && {
-    accurate(mishra5((-1.98682, -10.0)), -0.119829, epsilonF(5)) &&
+    mishra5((-1.98682, -10.0)) ~ (-0.119829, epsilonF(5)) &&
     mishra8((2.0, -3.0)) === 0.0
   }
 
@@ -450,6 +505,10 @@ object BenchmarksTest extends Properties("Benchmarks") {
     }
     z.forall(zi => parsopoulus(zi) ~ 0.0)
   }
+
+  property("pathological") = forAll(gen2And(-100.0, 100.0)) { g =>
+    pathological(g) >= 0.0
+  } && pathological(Sized2And(0.0, 0.0, List(0.0))) === 0.0
 
   property("penalty") = forAll(gen2And(-50.0, 50.0)) { g =>
     penalty1(g) >= 0.0
@@ -574,14 +633,20 @@ object BenchmarksTest extends Properties("Benchmarks") {
 
   property("schwefel222") = forAll(genNEL(-500.0, 500.0)) { g =>
     schwefel222(g) >= 0.0
-  }  && forAll(genConst(0.0)) { g =>
+  } && forAll(genConst(0.0)) { g =>
     schwefel222(g) === 0.0
   }
 
   property("schwefel223") = forAll(genNEL(-10.0, 10.0)) { g =>
     schwefel223(g) >= 0.0
-  }  && forAll(genConst(0.0)) { g =>
+  } && forAll(genConst(0.0)) { g =>
     schwefel223(g) === 0.0
+  }
+
+  property("schwefel225") = forAll(gen1And(-10.0, 10.0)) { g =>
+    schwefel225(g) >= 0.0
+  } && forAll(gen1And(1.0, 1.0)) { g =>
+    schwefel225(g) === 0.0
   }
 
   property("schwefel226") = forAll(genNEL(-500.0, 500.0)) { g =>
@@ -589,6 +654,10 @@ object BenchmarksTest extends Properties("Benchmarks") {
   } && forAll(genConst(420.968746)) { g =>
     schwefel226(g) ~ (0.0, epsilonF(2))
   }
+
+  property("schwefel236") = forAll(gen2(0.0, 500.0)) { g =>
+    schwefel236(g) >= -3456.0
+  } && schwefel236((12.0, 12.0)) === -3456.0
 
   property("schwefel24") = forAll(gen1And(0.0, 10.0)) { g =>
     schwefel24(g) >= 0.0
@@ -628,6 +697,12 @@ object BenchmarksTest extends Properties("Benchmarks") {
     step3(g) === 0.0
   }
 
+  property("stretchedVSineWave") = forAll(gen2And(-10.0, 10.0)) { g =>
+    stretchedVSineWave(g) >= 0.0
+  } && forAll(gen2And(0.0, 0.0)) { g =>
+    stretchedVSineWave(g) === 0.0
+  }
+
   property("sumSquares") = forAll(genNEL(-10.0, 10.0)) { g =>
     sumSquares(g) >= 0.0
   } && forAll(genConst(0.0)) { g =>
@@ -657,10 +732,67 @@ object BenchmarksTest extends Properties("Benchmarks") {
     trecanni((-2.0, 0.0)) === 0.0
   }
 
+  property("trigonometric1") = forAll(genNEL(0.0, pi)) { g =>
+    trigonometric1(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    trigonometric1(g) === 0.0
+  }
+
+  property("trigonometric2") = forAll(genNEL(-500.0, 500.0)) { g =>
+    trigonometric2(g) >= 1.0
+  } && forAll(genConst(0.9)) { g =>
+    trigonometric2(g) === 1.0
+  }
+
+  val genUrsem1 =
+    (Gen.choose(-2.5, 3.0) |@| Gen.choose(-2.0, 2.0)) { Tuple2.apply }
+
+  property("ursem1") = forAll(genUrsem1) { g =>
+    ursem1(g) >= -4.8168
+  } && ursem1((1.69714, 0.0)) ~ (-4.8168, epsilonF(4))
+
+  val genUrsem3 =
+    (Gen.choose(-2.0, 2.0) |@| Gen.choose(-1.5, 1.5)) { Tuple2.apply }
+
+  property("ursem3") = forAll(genUrsem3) { g =>
+    ursem3(g) >= -3.0
+  } && ursem3((0.0, 0.0)) === -3.0
+
+  property("ursem4") = forAll(gen2(-2.0, 2.0)) { g =>
+    ursem4(g) >= -1.5
+  } && ursem4((0.0, 0.0)) === -1.5
+
+  val genUrsemWaves =
+    (Gen.choose(-0.9, 1.2) |@| Gen.choose(-1.2, 1.2)) { Tuple2.apply }
+
+  property("ursemWaves") = forAll(genUrsemWaves) { g =>
+    ursemWaves(g) >= -8.5536
+  } && ursemWaves((1.2, 1.2)) ~ (-8.5536, epsilonF(5))
+
+  property("venterSobiezcczanskiSobieski") = forAll(gen2(-50.0, 50.0)) { g =>
+    venterSobiezcczanskiSobieski(g) >= -400.0
+  } && venterSobiezcczanskiSobieski((0.0, 0.0)) === -400.0
+
   property("vincent") = forAll(genNEL(0.25, 10.0)) { g =>
     vincent(g) >= -g.length + 0.0
   } && forAll(genConst(7.70628098)) { g =>
     vincent(g) ~ (-g.length + 0.0, epsilonF(8))
+  }
+
+  property("wayburnSeader1") = forAll(gen2(-5.0, 5.0)) { g =>
+    wayburnSeader1(g) >= 0.0
+  } && {
+    wayburnSeader1((1.0, 2.0)) === 0.0 &&
+    wayburnSeader1((1.597, 0.806)) ~ (0.0, epsilonF(3))
+  }
+
+  property("wayburnSeader2-3") = forAll(gen2(-500.0, 500.0)) { g =>
+    wayburnSeader2(g) >= 0.0 &&
+    wayburnSeader3(g) >= 21.349
+  } && {
+    wayburnSeader2((0.2, 1.0)) ~ (0.0, epsilonF(5)) &&
+    wayburnSeader2((0.425, 1.0)) ~ (0.0, epsilonF(5)) &&
+    wayburnSeader3((5.611, 6.187)) ~ (21.349, epsilonF(3))
   }
 
   property("wolfe") = forAll(gen3(0.0, 2.0)) { g =>
@@ -671,6 +803,12 @@ object BenchmarksTest extends Properties("Benchmarks") {
     wood(g) >= 0.0
   } && wood((1.0, 1.0, 1.0, 1.0)) === 0.0
 
+  property("xinsheYang") = forAll(genNEL(-2.0 * pi, 2.0 * pi)) { g =>
+    xinsheYang(g) >= 0.0
+  } && forAll(genConst(0.0)) { g =>
+    xinsheYang(g) === 0.0
+  }
+
   property("zakharov") = forAll(genNEL(-5.00, 10.0)) { g =>
     zakharov(g) >= 0.0
   } && forAll(genConst(0.0)) { g =>
@@ -680,5 +818,13 @@ object BenchmarksTest extends Properties("Benchmarks") {
   property("zettle") = forAll(gen2(-1.0, 5.0)) { g =>
     zettle(g) >= -0.0037912371501199
   } && zettle((-0.0299, 0.0)) === -0.0037912371501199
+
+  property("zirilli1") = forAll(gen2(-10.0, 10.0)) { g =>
+    zirilli1(g) >= -0.3523
+  } && zirilli1((-1.0465, 0.0)) ~ (-0.3523, epsilonF(4))
+
+  property("zirilli2") = forAll(gen2(-500.0, 500.0)) { g =>
+    zirilli2(g) >= 0.0
+  } && zirilli2((0.0, 0.0)) === 0.0
 
 }

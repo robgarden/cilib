@@ -17,6 +17,12 @@ import spire.implicits._
 
 object BenchmarksTest extends Properties("Benchmarks") {
   import Benchmarks._
+  import Benchmarks1D._
+  import Benchmarks2D._
+  import Benchmarks3D._
+  import Benchmarks4D._
+  import Benchmarks5D._
+  import Benchmarks6D._
 
   val zero3 = NonEmptyList.nels(0.0, 0.0, 0.0)
   def accurate(v: Double, d: Double, e: Double) = abs(v - d) <= e

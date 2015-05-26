@@ -12,6 +12,7 @@ val scalazVersion = "7.1.0"
 val spireVersion = "0.9.0"
 val monocleVersion = "1.1.1"
 val scalacheckVersion = "1.11.4"
+val shapelessVersion = "2.2.0"
 
 lazy val buildSettings = Seq(
   organization := "net.cilib",
@@ -38,6 +39,7 @@ lazy val commonSettings = Seq(
     "-Xfuture"
   ),
   resolvers ++= Seq(
+    Resolver.sonatypeRepo("snapshots"),
     Resolver.sonatypeRepo("releases"),
     "bintray/non" at "http://dl.bintray.com/non/maven"
   ),
@@ -144,7 +146,8 @@ lazy val core = project
     libraryDependencies ++= Seq(
       "org.scalaz"                  %% "scalaz-core"   % scalazVersion,
       "org.spire-math"              %% "spire"         % spireVersion,
-      "com.github.julien-truffaut"  %% "monocle-core"  % monocleVersion
+      "com.github.julien-truffaut"  %% "monocle-core"  % monocleVersion,
+      "com.chuusai"                 %% "shapeless"     % "2.1.0"
     )
   ))
 
@@ -181,7 +184,8 @@ lazy val example = project.dependsOn(core)
   .settings(Seq(
     libraryDependencies ++= Seq(
       "org.scalaz"                  %% "scalaz-core"   % scalazVersion,
-      "org.scalaz"                  %% "scalaz-effect" % scalazVersion
+      "org.scalaz"                  %% "scalaz-effect" % scalazVersion,
+      "com.chuusai"                 %% "shapeless"     % "2.1.0"
     )
    ))
 

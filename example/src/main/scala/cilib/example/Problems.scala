@@ -37,6 +37,8 @@ object Problems {
   def straight = new Unconstrained((a: List[Double]) => Valid(a.sum))
   def rastrigin = new Unconstrained((a: List[Double]) => Valid(Benchmarks.rastrigin(a)))
   def griewank = new Unconstrained((a: List[Double]) => Valid(Benchmarks.griewank(a)))
+  def absolute = new Unconstrained((a: List[Double]) => Valid(Benchmarks.absoluteValue(a)))
+  def alpine = new Unconstrained((a: List[Double]) => Valid(Benchmarks.alpine1(a)))
 
   // Not sure where to put these yet....
 

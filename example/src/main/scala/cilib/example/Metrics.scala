@@ -54,43 +54,31 @@ object MetricsExample {
       }
 
     val is1 = nfp(is)
-    val e = is._3
+    val e = is1._3
     e
-  }
-
-  def computeHash(p: Int, q: Int): Int = {
-    val x = -p + 2 * q
-    if (x < 0) x + 3
-    else x + 2
   }
 
   def infoContent(e: Double, x: Sized2And[List, Double]) = {
     val s = S(e, x)
 
-    def cs(n: List[Int], p: Int): List[Int] =
-      if (p < s.length - 1) {
-        val q = p + 1
-        if (s(p) != s(q)) {
-          val hash = computeHash(s(p), s(q))
-          cs(n.updated(hash, n(hash) + 1), p + 1)
-        }
-        else cs(n, p + 1)
-      } else n
+    def hash(p: Int, q: Int): Int = {
+      val x = -p + 2 * q
+      if (x < 0) x + 3
+      else x + 2
+    }
 
-    val c: List[Int] = cs(List.fill(6)(0), 0)
-    val n = s.length - 1
+    val grouped = s.sliding(2).toList
+      .filter  { case Seq(p, q) => p != q }
+      .map     { case Seq(p, q) => hash(p, q) }
+      .groupBy { x => x }
 
-    def ent(entropy: Double, i: Int): Double =
-      if (i < 6) {
-        val prob = c(i).toDouble / n
-        if (prob != 0) {
-          val entropy1 = prob * (math.log(prob) / math.log(6))
-          ent(entropy + entropy1, i + 1)
-        } else ent(entropy, i + 1)
-      } else entropy
+    val entropy = grouped.values.toList.map(_.length).map {
+      ent =>
+        val prob = ent.toDouble / (s.length - 1)
+        prob * (math.log(prob) / math.log(6))
+    }
 
-    val entropy = ent(0, 0)
-    -entropy
+    -entropy.sum
   }
 
   def fem(x: Sized3And[List, Position[List, Double]]): Maybe[Double] = {
@@ -99,14 +87,12 @@ object MetricsExample {
 
     val f: Maybe[List[Double]] = for {
       l <- fitnesses
-    } yield l.map(_ match {
-      case Valid(v) => v
-      case Penalty(v,_) => v
-    })
+      v = l.map(_ match {
+        case Valid(v) => v
+        case Penalty(v,_) => v
+      })
+    } yield v
 
-    val x2: Maybe[Sized2And[List,Double]] = f.flatMap(toSized2And(_))
-
-    val epsilonStar: Maybe[Double] = x2.map(infoStability(_))
     val increment = 0.05
     val numEpsilons = (1.0 / increment).toInt + 1
 
@@ -114,33 +100,36 @@ object MetricsExample {
       if (i < numEpsilons) getEpsilons(e.updated(i, es * mult), mult + increment, i + 1, es)
       else e
 
-    val epsilons: Maybe[List[Double]] = epsilonStar.map(getEpsilons(List.fill(numEpsilons)(0), 0.0, 0, _))
-
     for {
-      x21 <- x2
-      es <- epsilons
-      newEs = es.map(e => infoContent(e, x21))
-    } yield newEs.max
+      fi          <- f
+      x2          <- toSized2And(fi)
+      epsilonStar =  infoStability(x2)
+      epsilons    =  getEpsilons(List.fill(numEpsilons)(0), 0.0, 0, epsilonStar)
+      es          =  epsilons.map(e => infoContent(e, x2))
+    } yield es.max
 
   }
 
   def main(args: Array[String]): Unit = {
-    val sum = Problems.ackley
+    val sum = Problems.sphere
 
-    val bounds = Interval(closed(-32.0), closed(32.0))
+    val bounds = Interval(closed(-100.0), closed(100.0))
 
-    val points: RVar[List[Position[List,Double]]] = RandomWalks.progressive(bounds^10, 1000, 6.4)
+    val points: RVar[List[Position[List,Double]]] = RandomWalks.progressive(bounds^1, 1000, 20)
+    // val points = Position.createPositions(bounds^10, 500)
 
-    val solutions: RVar[List[Position[List, Double]]] = points.flatMap(_.traverse(_.eval(sum)))
+    val f: RVar[Maybe[Double]] = for {
+      p <- points
+      s <- p.traverse(_.eval(sum))
+    } yield toSized3And(s).flatMap(fem)
 
-    val solutions1: RVar[Maybe[Sized3And[List, Position[List, Double]]]] = solutions.map(toSized3And)
+    // val solutions1: RVar[Maybe[Sized3And[List, Position[List, Double]]]] = solutions.map(toSized3And)
 
-    val f: RVar[Maybe[Double]] = solutions1.map(_.flatMap(fem))
+    // val f: RVar[Maybe[Double]] = solutions1.map(_.flatMap(fem))
 
-    val a = (0 to 100).toList.map(_ => f run RNG.fromTime).traverse(f1 => f1._2)
+    val a = (0 until 1).toList.map(_ => f run RNG.fromTime).traverse(f1 => f1._2)
     val avg = a.map(ai => ai.sum / ai.length)
     println(avg)
-    // println(f run RNG.fromTime)
   }
 
 }

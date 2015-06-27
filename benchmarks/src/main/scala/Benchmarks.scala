@@ -61,7 +61,7 @@ object Benchmarks {
     }
 
   // Functions
-  def absoluteValue[F[_]: Foldable1, A: Signed: Monoid](x: F[A]) =
+  def absoluteValue[F[_]: Foldable, A: Signed: Monoid](x: F[A]) =
     x.foldMap(abs(_))
 
   def ackley[F[_]: Foldable, A: Field : IsReal : NRoot : Trig : Monoid](x: F[A]) = {
@@ -77,7 +77,7 @@ object Benchmarks {
     cos(x1) * sin(x2) - (x1) / (x2 ** 2 + 1)
   }
 
-  def alpine1[F[_]: Foldable1, A: Field : Signed : Trig : Monoid](x: F[A]) =
+  def alpine1[F[_]: Foldable, A: Field : Signed : Trig : Monoid](x: F[A]) =
     x.foldMap(xi => abs((xi * sin(xi)) + (0.1 * xi)))
 
   def arithmeticMean[F[_]: Foldable1, A: NRoot : Monoid](x: F[A])(implicit A: Field[A]) = {

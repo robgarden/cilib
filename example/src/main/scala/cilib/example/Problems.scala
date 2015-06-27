@@ -28,6 +28,16 @@ object Problems {
   def spherical[F[_]:Foldable:SolutionRep,A](implicit N: Numeric[A]) =
     new Unconstrained[F,A]((a: F[A]) => Valid(a.foldMap(x => N.toDouble(N.times(x, x)))))
 
+  import benchmarks.Benchmarks
+
+  import scalaz.NonEmptyList
+  def sphere = new Unconstrained((a: List[Double]) => Valid(Benchmarks.spherical(a)))
+  def step = new Unconstrained((a: List[Double]) => Valid(Benchmarks.step2(a)))
+  def ackley = new Unconstrained((a: List[Double]) => Valid(Benchmarks.ackley(a)))
+  def straight = new Unconstrained((a: List[Double]) => Valid(a.sum))
+  def rastrigin = new Unconstrained((a: List[Double]) => Valid(Benchmarks.rastrigin(a)))
+  def griewank = new Unconstrained((a: List[Double]) => Valid(Benchmarks.griewank(a)))
+
   // Not sure where to put these yet....
 
   /* G13 Problems. Runarrson */

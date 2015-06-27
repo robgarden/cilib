@@ -136,7 +136,7 @@ lazy val cilib = project.in(file("."))
 //     publishArtifactsAction := PgpKeys.publishSigned.value
 //   )
 
-lazy val core = project
+lazy val core = project.dependsOn(benchmarks)
   .settings(moduleName := "cilib-core")
   .settings(cilibSettings)
   .settings(Seq(

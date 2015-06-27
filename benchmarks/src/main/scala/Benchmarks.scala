@@ -9,6 +9,7 @@ import scalaz.syntax.foldable1._
 import scalaz.std.list._
 import scalaz.std.option._
 import scalaz.syntax.std.option._
+import scalaz.Maybe
 
 import spire.math._
 import spire.algebra.{Monoid => _, _}
@@ -25,6 +26,7 @@ object Benchmarks {
 
   type Sized1And[F[_], A] = OneAnd[F, A]
   case class Sized2And[F[_], A](a: A, b: A, rest: F[A])
+  case class Sized3And[F[_], A](a: A, b: A, c: A, rest: F[A])
 
   def toSized1[F[_]: Foldable, A](x: F[A]): Option[Sized1[A]] = x.index(0)
 
@@ -33,6 +35,19 @@ object Benchmarks {
 
   def toSized3[F[_]: Foldable, A](x: F[A]): Option[Sized3[A]] =
     (x.index(0) |@| x.index(1) |@| x.index(2)) { (_, _, _) }
+
+  def toSized2And[A](x: List[A]): Maybe[Sized2And[List,A]] =
+    x match {
+      case a :: b :: rest => Maybe.just(Sized2And(a, b, rest))
+      case _ => Maybe.empty
+    }
+
+  def toSized3And[A](x: List[A]): Maybe[Sized3And[List,A]] =
+    x match {
+      case a :: b :: c :: rest => Maybe.just(Sized3And(a, b, c, rest))
+      case _ => Maybe.empty
+    }
+  // (x.index(0) |@| x.index(1) |@| x.index(2)) { Sized3And(_, _, _, x.drop(3)) }
 
   def toSized4[F[_]: Foldable, A](x: F[A]): Option[Sized4[A]] =
     (x.index(0) |@| x.index(1) |@| x.index(2) |@| x.index(3)) { (_, _, _, _) }
@@ -49,7 +64,7 @@ object Benchmarks {
   def absoluteValue[F[_]: Foldable1, A: Signed: Monoid](x: F[A]) =
     x.foldMap(abs(_))
 
-  def ackley[F[_]: Foldable1, A: Field : IsReal : NRoot : Trig : Monoid](x: F[A]) = {
+  def ackley[F[_]: Foldable, A: Field : IsReal : NRoot : Trig : Monoid](x: F[A]) = {
     val n = x.length
     val sumcos = x.foldMap(x => cos(2 * pi * x))
     val sumsqr = x.foldMap(_ ** 2)
@@ -416,7 +431,7 @@ object Benchmarks {
     t1 + t2 + t3
   }
 
-  def griewank[F[_]: Foldable1, A: Field : NRoot : Trig : Monoid](x: F[A]) = {
+  def griewank[F[_]: Foldable, A: Field : NRoot : Trig : Monoid](x: F[A]) = {
     val prod = x.toList.zipWithIndex.map { case (xi, i) =>
       cos(xi / sqrt(i + 1.0))
     }.qproduct
@@ -863,7 +878,7 @@ object Benchmarks {
       (xi ** 5) - 3 * (xi ** 4) + 4 * (xi ** 3) + 2 * (xi ** 2) - 10.0 * xi - 4
     })
 
-  def rastrigin[F[_]: Foldable1, A: Field : IsReal : Trig : Monoid](x: F[A]) =
+  def rastrigin[F[_]: Foldable, A: Field : IsReal : Trig : Monoid](x: F[A]) =
     10 * x.length + x.foldMap(xi => xi ** 2 - 10 * cos(2 * pi * xi))
 
   def rosenbrock[F[_]: Foldable, A: Ring : Monoid](x: Sized2And[F, A]) =
@@ -968,12 +983,12 @@ object Benchmarks {
     tX1 + tX2
   }
 
-  def spherical[F[_]: Foldable1, A: Ring : Monoid](x: F[A]) = x.foldMap(_ ** 2)
+  def spherical[F[_]: Foldable, A: Ring : Monoid](x: F[A]) = x.foldMap(_ ** 2)
 
-  def step1[F[_]: Foldable1, A: IsReal : Ring : Signed : Monoid](x: F[A]) =
+  def step1[F[_]: Foldable, A: IsReal : Ring : Signed : Monoid](x: F[A]) =
     x.foldMap(xi => floor(abs(xi)))
 
-  def step2[F[_]: Foldable1, A: Field : IsReal : Monoid](x: F[A]) =
+  def step2[F[_]: Foldable, A: Field : IsReal : Monoid](x: F[A]) =
     x.foldMap(xi => (floor(xi) + 0.5) ** 2)
 
   def step3[F[_]: Foldable1, A: IsReal : Ring : Monoid](x: F[A]) =

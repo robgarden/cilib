@@ -7,10 +7,15 @@ import Ordering._
 import scalaz.std.anyVal._
 import scalaz.syntax.equal._
 
-sealed trait Fit
+sealed trait Fit {
+  def fold[Z](penalty: Penalty => Z, valid: Valid => Z): Z =
+    this match {
+      case p @ Penalty(_,_) => penalty(p)
+      case v @ Valid(_) => valid(v)
+    }
+}
 final case class Penalty(v: Double, p: Double) extends Fit
 final case class Valid(v: Double) extends Fit
-//final object Invalid extends Fit
 
 @annotation.implicitNotFound("Cannot find instance of type class Fitness[${A}]")
 trait Fitness[A] {
@@ -18,10 +23,8 @@ trait Fitness[A] {
 }
 
 object Fitness {
-
   def compare[A](x: A, y: A)(implicit F: Fitness[A]): Reader[Opt, A] =
     Reader(o => if (o.order(F.fitness(x), F.fitness(y)) === GT) x else y)
-
 }
 
 sealed trait Opt extends Order[Maybe[Fit]] {

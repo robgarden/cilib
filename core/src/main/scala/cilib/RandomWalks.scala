@@ -9,16 +9,17 @@ object RandomWalks {
   type StartingZones = List[Boolean]
   type WalkStep = Position[List, Double]
 
-  def progressive(domain: List[Interval[Double]], steps: Int, stepSize: Double) = {
+  def progressive(domain: NonEmptyList[Interval[Double]], steps: Int, stepSize: Double) = {
 
-    val n = domain.length
+    val n = domain.size
 
     // random bits indicating starting zone per dimension
     val start: RVar[StartingZones] =
       Range.inclusive(0, n - 1).toList.traverse(i => RVar.next[Boolean])
+      // (0 until n - 1).toList.toNel.map(_.traverse(i => RVar.next[Boolean]))
 
     val zipped: RVar[List[((Boolean, Interval[Double]), Int)]] =
-      start.map(s => s.zip(domain).zipWithIndex)
+      start.map(s => s.zip(domain.list).zipWithIndex)
 
     val walk0: RVar[WalkStep] = zipped.flatMap(z => z.traverse {
       case ((b, di), i) =>
@@ -41,7 +42,7 @@ object RandomWalks {
       for {
         state <- S.get
         (zones, awalk, step) = state
-        w <- hoist.liftM((zones zip awalk.pos zip domain).traverse {
+        w <- hoist.liftM((zones zip awalk.pos zip domain.list).traverse {
           case ((s1, ws1), i) =>
               val r: RVar[Double] = Dist.uniform(0.0, stepSize).map(ri => if (s1) -ri else ri)
               val wss: RVar[(Boolean, Double, Interval[Double])] = r.map(ws1 + _).map { wss =>
@@ -61,16 +62,16 @@ object RandomWalks {
     }
   }
 
-  def progressiveManhattan(domain: List[Interval[Double]], steps: Int, stepSize: Double) = {
+  def progressiveManhattan(domain: NonEmptyList[Interval[Double]], steps: Int, stepSize: Double) = {
 
-    val n = domain.length
+    val n = domain.size
 
     // random bits indicating starting zone per dimension
     val start: RVar[StartingZones] =
       Range.inclusive(0, n - 1).toList.traverse(i => RVar.next[Boolean])
 
     val zipped: RVar[List[((Boolean, Interval[Double]), Int)]] =
-      start.map(s => s.zip(domain).zipWithIndex)
+      start.map(s => s.zip(domain.list).zipWithIndex)
 
     val walk0: RVar[WalkStep] = zipped.flatMap(z => z.traverse {
       case ((b, di), i) =>
@@ -93,7 +94,7 @@ object RandomWalks {
         state <- S.get
         (zones, awalk, step) = state
         r <- hoist.liftM(Dist.uniformInt(0, n - 1))
-        w = ((zones zip awalk.pos zip domain).zipWithIndex).map {
+        w = ((zones zip awalk.pos zip domain.list).zipWithIndex).map {
           case (((s1, ws1), interval), i)  =>
             val wss = {
               if (i == r) {

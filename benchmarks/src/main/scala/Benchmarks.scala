@@ -1064,12 +1064,7 @@ object Benchmarks {
     tX1 + tX2
   }
 
-<<<<<<< HEAD
   def spherical[F[_]: Foldable, A: Ring : Monoid](x: F[A]) = x.foldMap(_ ** 2)
-=======
-  def spherical[F[_]: Foldable1, A: Ring : Monoid](x: F[A]) =
-    x.foldMap(_ ** 2)
->>>>>>> series/2.0.x
 
   def step1[F[_]: Foldable, A: IsReal : Ring : Signed : Monoid](x: F[A]) =
     x.foldMap(xi => floor(abs(xi)))

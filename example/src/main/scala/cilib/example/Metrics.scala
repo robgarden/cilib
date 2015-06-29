@@ -10,13 +10,14 @@ object MetricsExample {
 
   def main(args: Array[String]): Unit = {
 
-    val sum = Problems.sphere
+    val sum = Problems.rastrigin
 
-    val bounds = Interval(closed(-10.0), closed(10.0))
-    val domain = bounds^10
+    val bounds = Interval(closed(-5.12), closed(5.12))
+    val domain = bounds^1
+    val stepSize = (bounds.upper.value - bounds.lower.value) * (1.0 / 32)
 
-    val walk = Position.createPositions(domain, 1000)
-   // val walk: RVar[List[Position[List,Double]]] = RandomWalks.progressive(bounds^1, 1000, 20)
+    // val walk = Position.createPositions(domain, 1000)
+    val walk: RVar[List[Position[List,Double]]] = RandomWalks.progressiveManhattan(domain, 1000, stepSize)
 
     val solutions: RVar[List[Position[List, Double]]] = for {
       points <- walk
@@ -27,10 +28,12 @@ object MetricsExample {
     // val solutions1 = solutions.map(toSized3And)
 
     // val ruggedness = solutions1.map(_.flatMap(fem))
-    val dispersion = FunctionMetrics.dispersion(0.1, Min, domain)
-    val metric = solutions.map(dispersion)
+    // val dispersion = FunctionMetrics.dispersion(0.1, Min, domain)
+    // val metric = solutions.map(dispersion)
+    val g = FunctionMetrics.gradientAvg(stepSize, domain)
+    val metric = solutions.map(g)
 
-    val a = (0 until 100).toList.map(_ => metric run RNG.fromTime).traverse(f1 => f1._2)
+    val a = (0 until 30).toList.map(_ => metric run RNG.fromTime).traverse(f1 => f1._2)
     val avg = a.map(ai => ai.sum / ai.length)
     println(avg)
 

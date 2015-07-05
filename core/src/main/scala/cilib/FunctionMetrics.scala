@@ -144,7 +144,6 @@ object FunctionMetrics {
         } yield es.max
     }
 
-
   def dispersion(threshold: Double, opt: Opt, domain: NonEmptyList[Interval[Double]]): FunctionMetric =
     solutions => {
       val dimension = domain.size
@@ -257,4 +256,133 @@ object FunctionMetrics {
       for {
         g <- gradients(stepSize, domain)(solutions)
       } yield g.map(abs).max
+
+  def fciCog(opt: Opt, domain: NonEmptyList[Interval[Double]], n: Int): Eval[List,Double] => RVar[Maybe[Double]] =
+    eval => {
+      import cilib.Defaults.cognitive
+
+      val pbest = Guide.pbest[Mem[List,Double],List,Double]
+
+      val pso = cognitive(0.729844, 1.496180, pbest)
+
+      val points0: RVar[List[Position[List, Double]]] = Position.createPositions(domain, n)
+
+      val points1: RVar[List[Position[List, Double]]] =
+        points0.flatMap { l => l.traverse {
+          solution => {
+            val x = solution.pos
+            val zipped = x zip domain.list
+            val pbest = zipped.traverse { case (xi, di) => {
+              val range = di.upper.value - di.lower.value
+              val dev = range * 0.1
+              Dist.gaussian(0.0, dev).map { g =>
+                val add = xi + g
+                if ((add > di.upper.value) || (add < di.lower.value))
+                  xi - g
+                else
+                  add
+              }
+            }}
+            pbest.map(Position(_))
+          }
+        }}
+
+      val x0 = for {
+        points <- points0
+        steps = points.map(p => Step.evalF(p))
+        sols <- steps.traverse(step => (step run opt)(eval))
+      } yield sols
+
+      val x1 = for {
+        points <- points1
+        steps = points.map(p => Step.evalF(p))
+        sols <- steps.traverse(step => (step run opt)(eval))
+      } yield sols
+
+      val zipped = for {
+        x0s <- x0
+        x1s <- x1
+      } yield (x0s zip x1s)
+
+      val solutions: RVar[Maybe[List[Entity[Mem[List,Double], List, Double]]]] = zipped.map(_.traverse {
+        case (xi, zi) =>
+          for {
+            xf <- xi.fit
+            zf <- zi.fit
+            xfv = xf.fold(_.v, _.v)
+            zfv = zf.fold(_.v, _.v)
+            (xi0, yi0) = if (zfv < xfv) (xi, zi) else (zi, xi)
+          } yield Entity(Mem(yi0, xi0.zeroed), xi0)
+      })
+
+      val iteration0: RVar[Maybe[List[Particle[Mem[List,Double], List,Double]]]] = solutions.flatMap { m =>
+        m.traverse { entities =>
+          val psos0 = pso(entities)
+          val s0 = entities.map(psos0)
+          val iteration0 = s0.traverse(step => step.run(opt)(eval))
+          iteration0
+        }
+      }
+
+      val iteration1: RVar[Maybe[List[Particle[Mem[List,Double], List,Double]]]] = iteration0.flatMap { m =>
+        m.traverse { entities =>
+          val psos1 = pso(entities)
+          val s1 = entities.map(psos1)
+          val iteration1 = s1.traverse(step => step.run(opt)(eval))
+          iteration1
+        }
+      }
+
+      val iteration2: RVar[Maybe[List[Particle[Mem[List,Double], List,Double]]]] = iteration1.flatMap { m =>
+        m.traverse { entities =>
+          val psos2 = pso(entities)
+          val s2 = entities.map(psos2)
+          val iteration2 = s2.traverse(step => step.run(opt)(eval))
+          iteration2
+        }
+      }
+
+      for {
+        m1 <- iteration1 // Maybe[List[Particle]]
+        m2 <- iteration2 // Maybe[List[Particle]]
+        zipped = (m1 zip m2) map { case (l1, l2) => l1 zip l2 } // Maybe[List(List, List)]
+        filtered = zipped.map(l => l.filter { case (l1i, l2i) => inBounds(l2i.pos, domain) })
+        l1 = filtered.map(l => l map { case (l1i, l2i) => l1i })
+        l2 = filtered.map(l => l map { case (l1i, l2i) => l2i })
+        f = (l1 zip l2) flatMap { case (i1, i2) => fci(i1.map(_.pos), i2.map(_.pos)) }
+        length = l1.map(_.length.toDouble)
+      } yield f
+
+    }
+
+  def inBounds(x: Position[List,Double], domain: NonEmptyList[Interval[Double]]) =
+    (x.pos zip domain.list).forall {
+      case (xi, di) => (xi >= di.lower.value) && (xi <= di.upper.value)
+    }
+
+  def fci(x: List[Position[List,Double]], y: List[Position[List,Double]]): Maybe[Double] = {
+
+    def normFitness(solutions: List[Position[List, Double]]): Maybe[List[Double]] = {
+      val best  = solutions.reduceLeft((a, b) => Fitness.compare(a, b) run Min)
+      val worst = solutions.reduceLeft((a, b) => Fitness.compare(a, b) run Max)
+
+      for {
+        b <- best.fit
+        w <- worst.fit
+        f <- x.traverse(_.fit)
+        bv = b.fold(_.v, _.v)
+        wv = w.fold(_.v, _.v)
+        fv = f.map(_.fold(_.v, _.v))
+      } yield fv.map(fi => (fi - wv) / (bv - wv))
+    }
+
+    for {
+      nx <- normFitness(x)
+      ny <- normFitness(y)
+      zipped = nx zip ny
+      gf = zipped.map { case (fi, fi1) => if (fi1 < fi) 1.0 else 0.0 }
+    } yield gf.sum / gf.length.toDouble
+
+  }
+
 }

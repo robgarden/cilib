@@ -10,7 +10,7 @@ import spire.implicits._
 
 object GBestPSO extends SafeApp {
 
-  val sum = Problems.spherical[List,Double]
+  val sum = Problems.spherical
 
   // Define a normal GBest PSO and run it for a single iteration
   val cognitive = Guide.pbest[Mem[List,Double],List,Double]
@@ -19,7 +19,7 @@ object GBestPSO extends SafeApp {
   val gbestPSO = gbest(0.729844, 1.496180, 1.496180, cognitive, social)
 
   // RVar
-  val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(-5.12),closed(5.12))^30, 20)
+  val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(-5.12),closed(5.12))^1, 20)
 
   val a = Step.pointR[List,Double,List[Particle[Mem[List,Double],List,Double]]](swarm)
 
@@ -43,5 +43,5 @@ object GBestPSO extends SafeApp {
 
   // Our IO[Unit] that runs at the end of the world
   override val runc: IO[Unit] =
-    putStrLn(m.run(RNG.fromTime).toString)
+    putStrLn(m.run(RNG.fromTime)._2.map(p => p.pos).toString)
 }

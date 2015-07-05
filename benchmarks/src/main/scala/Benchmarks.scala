@@ -1,8 +1,6 @@
 package cilib
 package benchmarks
 
-import _root_.scala.Predef.{any2stringadd => _, _}
-
 import scalaz.{Functor,Foldable,Foldable1,Applicative,Monoid,NonEmptyList,Id,OneAnd}
 import scalaz.syntax.apply._
 import scalaz.syntax.foldable1._
@@ -36,6 +34,12 @@ object Benchmarks {
   def toSized3[F[_]: Foldable, A](x: F[A]): Option[Sized3[A]] =
     (x.index(0) |@| x.index(1) |@| x.index(2)) { (_, _, _) }
 
+  def toSized1And[A](x: List[A]): Maybe[Sized1And[List,A]] =
+    x match {
+      case a :: rest => Maybe.just(OneAnd(a, rest))
+      case _ => Maybe.empty
+    }
+
   def toSized2And[A](x: List[A]): Maybe[Sized2And[List,A]] =
     x match {
       case a :: b :: rest => Maybe.just(Sized2And(a, b, rest))
@@ -47,7 +51,6 @@ object Benchmarks {
       case a :: b :: c :: rest => Maybe.just(Sized3And(a, b, c, rest))
       case _ => Maybe.empty
     }
-  // (x.index(0) |@| x.index(1) |@| x.index(2)) { Sized3And(_, _, _, x.drop(3)) }
 
   def toSized4[F[_]: Foldable, A](x: F[A]): Option[Sized4[A]] =
     (x.index(0) |@| x.index(1) |@| x.index(2) |@| x.index(3)) { (_, _, _, _) }
@@ -195,7 +198,7 @@ object Benchmarks {
 
     (1 to 15).toList.foldMap { ui =>
       val vi = 16 - ui
-      val wi = spire.math.min(ui, vi)
+      val wi = min(ui, vi)
       ((y(ui - 1) - x1 - ui) / (vi * x2 + wi * x3)) ** 2
     }
   }
@@ -1023,7 +1026,7 @@ object Benchmarks {
     }
 
   def schwefel221[F[_]: Foldable, A: Order : Signed](x: Sized1And[F, A]) =
-    x.foldLeft(abs(x.head)) { (xi, xi1) => spire.math.max(abs(xi), abs(xi1)) }
+    x.foldLeft(abs(x.head)) { (xi, xi1) => max(abs(xi), abs(xi1)) }
 
   def schwefel222[F[_]: Foldable1 : Functor, A: Signed : Monoid](x: F[A])(implicit A: Ring[A]) =
     x.foldMap(abs(_)) + x.map(abs(_)).foldLeft(A.one)(_ * _)
@@ -1047,7 +1050,7 @@ object Benchmarks {
 
   def schwefel26[A: Order : Ring : Signed](x: Sized2[A]) = {
     val (x1, x2) = x
-    spire.math.max(abs(x1 + 2 * x2 - 7), abs(2 * x1 + x2 - 5))
+    max(abs(x1 + 2 * x2 - 7), abs(2 * x1 + x2 - 5))
   }
 
   def shubert[F[_]: Foldable, A: Field : Trig : Monoid](x: Sized2[A]) = {
@@ -1064,7 +1067,7 @@ object Benchmarks {
     tX1 + tX2
   }
 
-  def spherical[F[_]: Foldable, A: Ring : Monoid](x: F[A]) = x.foldMap(_ ** 2)
+  def spherical[F[_]: Foldable1, A: Ring : Monoid](x: F[A]) = x.foldMap(_ ** 2)
 
   def step1[F[_]: Foldable, A: IsReal : Ring : Signed : Monoid](x: F[A]) =
     x.foldMap(xi => floor(abs(xi)))

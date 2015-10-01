@@ -64,7 +64,7 @@ object Benchmarks {
     }
 
   // Functions
-  def absoluteValue[F[_]: Foldable, A: Signed: Monoid](x: F[A]) =
+  def absoluteValue[F[_]: Foldable1, A: Signed: Monoid](x: F[A]) =
     x.foldMap(abs(_))
 
   def ackley[F[_]: Foldable, A: Field : IsReal : NRoot : Trig : Monoid](x: F[A]) = {

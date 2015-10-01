@@ -29,6 +29,7 @@ object Problems {
   import scalaz.Scalaz._
 
   def ackley    = Unconstrained { (a: List[Double]) => Valid(Benchmarks.ackley(a.convertNel)) }
+  def absolute  = Unconstrained { (a: List[Double]) => Valid(Benchmarks.absoluteValue(a.convertNel)) }
   def spherical = Unconstrained { (a: List[Double]) => Valid(Benchmarks.spherical(a.convertNel)) }
   def adjiman   = Unconstrained { (a: List[Double]) => Valid(Benchmarks.adjiman(a.convertSized2)) }
 

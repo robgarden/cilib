@@ -5,7 +5,7 @@ import benchmarks.Benchmarks._
 import scalaz._
 import Scalaz._
 
-object MetricsExample {
+object DispersionExample {
 
   def main(args: Array[String]): Unit = {
 
@@ -24,16 +24,8 @@ object MetricsExample {
       sols   <- steps.traverse(step => (step run Min)(sum))
     } yield sols
 
-    // val solutions1 = solutions.map(toSized3And)
-
-    // val ruggedness = solutions1.map(_.flatMap(fem))
-    // val dispersion = FunctionMetrics.dispersion(0.1, Min, domain)
-    // val metric = solutions.map(dispersion)
-    // val g = FunctionMetrics.gradientAvg(stepSize, domain)
-    // val metric = solutions.map(g)
-
-    val fciC = FunctionMetrics.fciCog(Min, domain, 10000)
-    val metric = fciC(sum)
+    val dispersion = FunctionMetrics.dispersion(0.1, Min, domain)
+    val metric = solutions.map(dispersion)
 
     val a = (0 until 10).toList.map(_ => metric run RNG.fromTime).traverse(f1 => f1._2)
     val avg = a.map(ai => ai.sum / ai.length)

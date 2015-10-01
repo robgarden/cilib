@@ -209,8 +209,9 @@ object FunctionMetrics {
       } yield distanceVector(pv, sv)
     }
 
-  def gradients(stepSize: Double, domain: NonEmptyList[Interval[Double]]): List[Position[List,Double]] => Maybe[List[Double]] =
-    (solutions) => {
+  def gradients(stepSize: Double, domain: NonEmptyList[Interval[Double]]): Sized2And[List, Position[List,Double]] => Maybe[List[Double]] =
+    (sols) => {
+      val solutions = sols.a :: sols.b :: sols.rest.toList
       val best = solutions.reduceLeft((a, b) => Fitness.compare(a, b) run Min)
       val worst = solutions.reduceLeft((a, b) => Fitness.compare(a, b) run Max)
 
@@ -236,22 +237,24 @@ object FunctionMetrics {
       }
     }
 
-  def gradientAvg(stepSize: Double, domain: NonEmptyList[Interval[Double]]): FunctionMetric =
+  def gradientAvg(stepSize: Double, domain: NonEmptyList[Interval[Double]]): Sized2And[List, Position[List, Double]] => Maybe[Double] =
     (solutions) =>
       for {
         g <- gradients(stepSize, domain)(solutions)
         sum = g.map(abs).sum
-      } yield sum / solutions.length
+      } yield sum / (2 + solutions.rest.toList.length)
 
-  def gradientDev(stepSize: Double, domain: NonEmptyList[Interval[Double]]): FunctionMetric =
-    (solutions) =>
+  def gradientDev(stepSize: Double, domain: NonEmptyList[Interval[Double]]): Sized2And[List, Position[List, Double]] => Maybe[Double] =
+    (solutions) => {
+      val length = 2 + solutions.rest.toList.length
       for {
         a <- gradientAvg(stepSize, domain)(solutions)
         g <- gradients(stepSize, domain)(solutions)
         dev = g.map(gt => (a - abs(gt)) ** 2).sum
-      } yield sqrt(dev / (solutions.length - 1))
+      } yield sqrt(dev / (length - 1))
+    }
 
-  def gradientMax(stepSize: Double, domain: NonEmptyList[Interval[Double]]): FunctionMetric =
+  def gradientMax(stepSize: Double, domain: NonEmptyList[Interval[Double]]): Sized2And[List, Position[List, Double]] => Maybe[Double] =
     (solutions) =>
       for {
         g <- gradients(stepSize, domain)(solutions)

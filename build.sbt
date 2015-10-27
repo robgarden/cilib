@@ -174,7 +174,7 @@ lazy val docs = project
   .settings(tutSettings)
   .dependsOn(core, benchmarks)
 
-lazy val example = project.dependsOn(core)
+lazy val example = project.dependsOn(core).dependsOn(benchmarks)
   .settings(moduleName := "cilib-example")
   .settings(cilibSettings)
   .settings(noPublishSettings)

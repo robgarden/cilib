@@ -1,6 +1,6 @@
 package cilib
 
-import scalaz.{Foldable,Id,OneAnd}
+import scalaz.{Foldable,Id,OneAnd,Maybe}
 import scalaz.syntax.apply._
 import scalaz.syntax.foldable1._
 import scalaz.std.option._
@@ -17,6 +17,25 @@ object Sized {
 
   type Sized1And[F[_], A] = OneAnd[F, A]
   final case class Sized2And[F[_], A](a: A, b: A, rest: F[A])
+  final case class Sized3And[F[_], A](a: A, b: A, c: A, rest: F[A])
+
+  def toSized1And[A](x: List[A]): Maybe[Sized1And[List,A]] =
+    x match {
+      case a :: rest => Maybe.just(OneAnd(a, rest))
+      case _ => Maybe.empty
+    }
+
+  def toSized2And[A](x: List[A]): Maybe[Sized2And[List,A]] =
+    x match {
+      case a :: b :: rest => Maybe.just(Sized2And(a, b, rest))
+      case _ => Maybe.empty
+    }
+
+  def toSized3And[A](x: List[A]): Maybe[Sized3And[List,A]] =
+    x match {
+      case a :: b :: c :: rest => Maybe.just(Sized3And(a, b, c, rest))
+      case _ => Maybe.empty
+    }
 
   def toSized1[F[_]: Foldable, A](x: F[A]): Option[Sized1[A]] = x.index(0)
 

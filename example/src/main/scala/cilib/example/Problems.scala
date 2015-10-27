@@ -24,11 +24,47 @@ import spire.implicits._
 object Problems {
 
   /* Some of the more common static benchmark problems */
-  import scalaz.Foldable
+  import scalaz._
+  import Scalaz._
+  import cilib.benchmarks._
+  import cilib.Sized._
 
-  def spherical[F[_]:Foldable:SolutionRep,A](implicit N: Numeric[A]) =
-    new Unconstrained[F,A]((a: F[A]) => Valid(a.foldMap(x => N.toDouble(N.times(x, x)))))
+//  def ackley    = Unconstrained { (a: List[Double]) => Valid(Benchmarks.ackley(a.convertNel)) }
+  def absolute  = Unconstrained { (a: List[Double]) => Valid(Benchmarks.absoluteValue(a.convertNel)) }
+  def spherical = Unconstrained { (a: List[Double]) => Valid(Benchmarks.spherical(a.convertNel)) }
+  def hyperEllipsoid = Unconstrained { (a: List[Double]) => Valid(Benchmarks.hyperEllipsoid(a.convertNel)) }
+  def schwefel221 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.schwefel221(a.convertSized1And)) }
+//  def adjiman   = Unconstrained { (a: List[Double]) => Valid(Benchmarks.adjiman(a.convertSized2)) }
 
+  implicit class ListConvertOps(x: List[Double]) {
+
+    implicit val convertNel: NonEmptyList[Double] =
+      x.toNel.getOrElse(sys.error("Input vector must have at least 1 element"))
+
+    implicit val convertSized2: Sized2[Double] =
+      toSized2(x).getOrElse(sys.error("Input vector must have 2 elements"))
+
+    implicit val convertSized3: Sized3[Double] =
+      toSized3(x).getOrElse(sys.error("Input vector must have 3 elements"))
+
+    implicit val convertSized4: Sized4[Double] =
+      toSized4(x).getOrElse(sys.error("Input vector must have 4 elements"))
+
+    implicit val convertSized5: Sized5[Double] =
+      toSized5(x).getOrElse(sys.error("Input vector must have 5 elements"))
+
+    implicit val convertSized6: Sized6[Double] =
+      toSized6(x).getOrElse(sys.error("Input vector must have 6 elements"))
+
+    implicit val convertSized1And: Sized1And[List,Double] =
+      toSized1And(x).getOrElse(sys.error("Input vector must have at least 1 element"))
+
+    implicit val convertSized2And: Sized2And[List,Double] =
+      toSized2And(x).getOrElse(sys.error("Input vector must have at least 2 element"))
+
+    implicit val convertSized3And: Sized3And[List,Double] =
+      toSized3And(x).getOrElse(sys.error("Input vector must have at least 3 element"))
+  }
   // Not sure where to put these yet....
 
   /* G13 Problems. Runarrson */

@@ -29,42 +29,38 @@ object Problems {
   import cilib.benchmarks._
   import cilib.Sized._
 
-//  def ackley    = Unconstrained { (a: List[Double]) => Valid(Benchmarks.ackley(a.convertNel)) }
-  def absolute  = Unconstrained { (a: List[Double]) => Valid(Benchmarks.absoluteValue(a.convertNel)) }
-  def spherical = Unconstrained { (a: List[Double]) => Valid(Benchmarks.spherical(a.convertNel)) }
-  def hyperEllipsoid = Unconstrained { (a: List[Double]) => Valid(Benchmarks.hyperEllipsoid(a.convertNel)) }
-  def schwefel221 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.schwefel221(a.convertSized1And)) }
+  // uni-modal / separable
+  val absolute  = Unconstrained { (a: List[Double]) => Valid(Benchmarks.absoluteValue(a.convertNel)) }
+  val differentPowers = Unconstrained { (a: List[Double]) => Valid(Benchmarks.differentPowers(a.convertSized2And)) }
+  val hyperEllipsoid = Unconstrained { (a: List[Double]) => Valid(Benchmarks.hyperEllipsoid(a.convertNel)) }
+  val powellSum = Unconstrained { (a: List[Double]) => Valid(Benchmarks.powellSum(a.convertNel)) }
+  val spherical = Unconstrained { (a: List[Double]) => Valid(Benchmarks.spherical(a.convertNel)) }
+
+  // uni-modal / non-separable
+  val brent = Unconstrained { (a: List[Double]) => Valid(Benchmarks.brent(a.convertNel)) }
+  val dixonPrice = Unconstrained { (a: List[Double]) => Valid(Benchmarks.dixonPrice(a.convertSized2And)) }
+  val katsuura = Unconstrained { (a: List[Double]) => Valid(Benchmarks.katsuura(a.convertNel)) }
+  val quadric = Unconstrained { (a: List[Double]) => Valid(Benchmarks.quadric(a.convertNel)) }
+  val zakharov = Unconstrained { (a: List[Double]) => Valid(Benchmarks.zakharov(a.convertNel)) }
+
+  // multi-modal / non-separable
+  val ackley    = Unconstrained { (a: List[Double]) => Valid(Benchmarks.ackley(a.convertNel)) }
+  val eggHolder = Unconstrained { (a: List[Double]) => Valid(Benchmarks.eggHolder(a.convertSized2And)) }
+  val exponential1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.exponential1(a.convertNel)) }
+  val norwegian = Unconstrained { (a: List[Double]) => Valid(Benchmarks.norwegian(a.convertNel)) }
+  val salomon = Unconstrained { (a: List[Double]) => Valid(Benchmarks.salomon(a.convertNel)) }
+
+  // multi-modal / separable
+  val alpine1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.alpine1(a.convertNel)) }
+  val michalewicz = Unconstrained { (a: List[Double]) => Valid(Benchmarks.michalewicz(10)(a.convertNel)) }
+  val step1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.step1(a.convertNel)) }
+  val vincent = Unconstrained { (a: List[Double]) => Valid(Benchmarks.vincent(a.convertNel)) }
+  val weierstrass = Unconstrained { (a: List[Double]) => Valid(Benchmarks.weierstrass(a.convertNel)) }
+
+//  def hyperEllipsoid = Unconstrained { (a: List[Double]) => Valid(Benchmarks.hyperEllipsoid(a.convertNel)) }
+//  def schwefel221 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.schwefel221(a.convertSized1And)) }
 //  def adjiman   = Unconstrained { (a: List[Double]) => Valid(Benchmarks.adjiman(a.convertSized2)) }
 
-  implicit class ListConvertOps(x: List[Double]) {
-
-    implicit val convertNel: NonEmptyList[Double] =
-      x.toNel.getOrElse(sys.error("Input vector must have at least 1 element"))
-
-    implicit val convertSized2: Sized2[Double] =
-      toSized2(x).getOrElse(sys.error("Input vector must have 2 elements"))
-
-    implicit val convertSized3: Sized3[Double] =
-      toSized3(x).getOrElse(sys.error("Input vector must have 3 elements"))
-
-    implicit val convertSized4: Sized4[Double] =
-      toSized4(x).getOrElse(sys.error("Input vector must have 4 elements"))
-
-    implicit val convertSized5: Sized5[Double] =
-      toSized5(x).getOrElse(sys.error("Input vector must have 5 elements"))
-
-    implicit val convertSized6: Sized6[Double] =
-      toSized6(x).getOrElse(sys.error("Input vector must have 6 elements"))
-
-    implicit val convertSized1And: Sized1And[List,Double] =
-      toSized1And(x).getOrElse(sys.error("Input vector must have at least 1 element"))
-
-    implicit val convertSized2And: Sized2And[List,Double] =
-      toSized2And(x).getOrElse(sys.error("Input vector must have at least 2 element"))
-
-    implicit val convertSized3And: Sized3And[List,Double] =
-      toSized3And(x).getOrElse(sys.error("Input vector must have at least 3 element"))
-  }
   // Not sure where to put these yet....
 
   /* G13 Problems. Runarrson */

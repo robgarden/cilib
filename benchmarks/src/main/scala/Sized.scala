@@ -1,9 +1,7 @@
 package cilib
 
-import scalaz.{Foldable,Id,OneAnd,Maybe}
-import scalaz.syntax.apply._
-import scalaz.syntax.foldable1._
-import scalaz.std.option._
+import scalaz._
+import Scalaz._
 
 object Sized {
 
@@ -55,5 +53,35 @@ object Sized {
     (x.index(0) |@| x.index(1) |@| x.index(2) |@| x.index(3) |@| x.index(4) |@| x.index(5)) {
       (_, _, _, _, _, _)
     }
+
+  implicit class ListConvertOps(x: List[Double]) {
+
+    implicit val convertNel: NonEmptyList[Double] =
+      x.toNel.getOrElse(sys.error("Input vector must have at least 1 element"))
+
+    implicit val convertSized2: Sized2[Double] =
+      toSized2(x).getOrElse(sys.error("Input vector must have 2 elements"))
+
+    implicit val convertSized3: Sized3[Double] =
+      toSized3(x).getOrElse(sys.error("Input vector must have 3 elements"))
+
+    implicit val convertSized4: Sized4[Double] =
+      toSized4(x).getOrElse(sys.error("Input vector must have 4 elements"))
+
+    implicit val convertSized5: Sized5[Double] =
+      toSized5(x).getOrElse(sys.error("Input vector must have 5 elements"))
+
+    implicit val convertSized6: Sized6[Double] =
+      toSized6(x).getOrElse(sys.error("Input vector must have 6 elements"))
+
+    implicit val convertSized1And: Sized1And[List,Double] =
+      toSized1And(x).getOrElse(sys.error("Input vector must have at least 1 element"))
+
+    implicit val convertSized2And: Sized2And[List,Double] =
+      toSized2And(x).getOrElse(sys.error("Input vector must have at least 2 element"))
+
+    implicit val convertSized3And: Sized3And[List,Double] =
+      toSized3And(x).getOrElse(sys.error("Input vector must have at least 3 element"))
+  }
 
 }

@@ -8,6 +8,8 @@ import scalaz.effect.IO.putStrLn
 import scalaz.std.list._
 import spire.implicits._
 
+import pl.project13.scala.rainbow._
+
 case class ProblemDef(name: String, problem: Eval[List,Double], l: Double, u: Double, dim: Int)
 
 object GBestPSO extends SafeApp {
@@ -51,63 +53,91 @@ object GBestPSO extends SafeApp {
     )
   )
 
-  // Define a normal GBest PSO and run it for a single iteration
-  val cognitive = Guide.pbest[Mem[List,Double],List,Double]
-  val social = Guide.gbest[Mem[List,Double],List]
+  val params = for {
+    w  <- List(0.1, 0.3, 0.5, 0.7, 0.9)
+    c1 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
+    c2 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
+  } yield (w, c1, c2)
 
-  val p1 = List(0.1, 0.3, 0.5, 0.7, 0.9)
-  val p2 = List(0.3, 0.7, 1.1, 1.5, 1.9)
-  val p3 = List(0.3, 0.7, 1.1, 1.5, 1.9)
-
-  val repeats = 30
+  val repeats = 5
   val iterations = 1000
+
+  val output = "/Users/robertgarden/Desktop/results"
+
+  val cognitive = Guide.pbest[Mem[List,Double],List,Double]
+  val (strategy, guide) = ("star", Guide.gbest[Mem[List,Double],List])
 
   import scalaz._
   import Scalaz._
 
+  println()
+  println(s"Running: '${strategy.magenta}':")
+  println(s"Iterations: \t $iterations")
+  println(s"Repeats: \t $repeats")
+  println(s"Problems: \t ${problemsClasses.values.flatten.size}")
+  println(s"Dimension: \t $dim")
+  println(s"Combinations: \t ${params.size}")
+  println("Total Runs: \t " + s"${repeats * params.size * problemsClasses.values.flatten.size}".red)
+  println(s"Writing To: \t ${output.green}")
+  println("Starting...".yellow)
+  println()
+
   problemsClasses.foreach { case (probClass, problems) =>
 
-    problems.foreach { prob =>
-      val averages = for {
+    println(s"Problem class: ${probClass.yellow}")
+    println("========================")
 
-        p1i <- p1
-        p2i <- p2
-        p3i <- p3
+    problems.foreach { prob =>
+
+      print(s"${prob.name.yellow}")
+
+      val averages = for {
+        (w, c1, c2) <- params
 
         //val gbestPSO = gbest(0.729844, 1.496180, 1.496180, cognitive, social)
-        gbestPSO = gbest(p1i, p2i, p3i, cognitive, social)
+        gbestPSO = gbest(w, c1, c2, cognitive, guide)
 
-        repeat = (for {
+        bests = for {
           i <- 0 until repeats
-          // RVar
+
           swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(prob.l),closed(prob.u))^prob.dim, 20)
           syncGBest = Iteration.sync(gbestPSO)
 
           finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).run(RNG init 1)._2
           fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
           best = fitnesses.map(_.min)
-        } yield best).toList.traverse(x => x)
 
-        avg = repeat.map(l => l.sum / l.length).getOrElse(-666.0)
+        } yield best
 
-      } yield s"${probClass},${prob.name},$p1i,$p2i,$p3i,$avg"
+        index = params.indexOf((w, c1, c2))
+        myprint = {
+          print("\r")
+          print(s"${prob.name.yellow} ")
+          val percent = (index.toDouble + 1.0) / params.size * 100
+          print(f"$percent%2.2f" + "%")
+        }
 
-     printToFile(new File(s"/Users/robgarden/Desktop/results/gbestpso_${probClass}_${prob.name}.txt")) { p =>
-       averages.foreach(p.println)
-     }
+        avg = bests.toList.traverse(x => x).map(l => l.sum / l.length).getOrElse(-666.0)
 
-      println(s"${prob.name} done")
+      } yield s"$strategy,$iterations,$repeats,$probClass,${prob.name},$dim,$w,$c1,$c2,$avg"
+
+      println()
+
+      printToFile(new File(s"$output/${strategy}_${probClass}_${prob.name}.txt")) { p =>
+
+        p.println(s"Strategy,Iterations,Repeat,ProblemClass,Problem,Dimension,w,c1,c2,avgbest")
+        averages.foreach(p.println)
+
+      }
+
     }
 
-    println("===============================")
-    println(s"Problem class: $probClass done")
+    println()
+    println("Done".green)
+    println()
   }
-
-//  val best = bests.reduceLeft((a, b) => if (a._3 < b._3) a else b)
-
-  //val lines = bests.mkString("\n")
 
   // Our IO[Unit] that runs at the end of the world
   override val runc: IO[Unit] =
-    putStrLn("Done")
+    putStrLn("")
 }

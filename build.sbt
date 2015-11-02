@@ -181,7 +181,8 @@ lazy val example = project.dependsOn(core).dependsOn(benchmarks)
   .settings(Seq(
     libraryDependencies ++= Seq(
       "org.scalaz"                  %% "scalaz-core"   % scalazVersion,
-      "org.scalaz"                  %% "scalaz-effect" % scalazVersion
+      "org.scalaz"                  %% "scalaz-effect" % scalazVersion,
+      "pl.project13.scala"          %% "rainbow"       % "0.2"
     )
    ))
 

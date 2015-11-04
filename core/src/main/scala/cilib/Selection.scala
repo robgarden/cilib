@@ -25,4 +25,10 @@ object Selection {
 
       c.drop(point).take(n).toList
     }
+
+  def wheel[A]: Selection[A] =
+    (l: List[A], a: A) => l match {
+      case x :: xs if (x == l) => l
+      case x :: _ => List(x, a)
+    }
 }

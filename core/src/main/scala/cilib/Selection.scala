@@ -26,6 +26,15 @@ object Selection {
       c.drop(point).take(n).toList
     }
 
+  import Scalaz._
+  import spire.implicits._
+
+  val euclidean = Distance.euclidean[List,Double]
+
+  def distanceNeighbours(n: Int) =
+    (l: List[Particle[Mem[List,Double],List,Double]], x: Particle[Mem[List,Double],List,Double]) =>
+      l.sortBy(li => euclidean(li.pos.pos, x.pos.pos)).take(n)
+
   def wheel[A]: Selection[A] =
     (l: List[A], a: A) => l match {
       case x :: xs if (x == l) => l

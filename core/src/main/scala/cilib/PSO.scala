@@ -3,6 +3,8 @@ package cilib
 import _root_.scala.Predef.{any2stringadd => _}
 
 import scalaz._
+import scalaz.std.list._
+import scalaz.syntax.traverse._
 
 import monocle.syntax._
 import Position._
@@ -35,6 +37,26 @@ object PSO {
       cog <- (cognitive - entity.pos) traverse (x => Dist.stdUniform.map(_ * x))
       soc <- (social    - entity.pos) traverse (x => Dist.stdUniform.map(_ * x))
     } yield (w *: V._velocity.get(entity.state)) + (c1 *: cog) + (c2 *: soc))
+
+  def velocityWithInertia[S,F[_]:Traverse](
+    entity: Particle[S,F,Double],
+    guides: List[(Position[F,Double],Double)],
+    w: Double
+  )(implicit V: Velocity[S,F,Double], M: Module[F[Double],Double]): Step[F,Double,Position[F,Double]] = {
+    Step.pointR(for {
+      components <- guides.traverse { case (g, c) => (g - entity.pos) traverse (x => Dist.stdUniform.map(_ * x * c)) }
+    } yield components.foldLeft(w *: V._velocity.get(entity.state))(_ + _))
+  }
+
+  def velocityWithConstriction[S,F[_]:Traverse](
+    entity: Particle[S,F,Double],
+    guides: List[(Position[F,Double],Double)],
+    X: Double
+  )(implicit V: Velocity[S,F,Double], M: Module[F[Double],Double]): Step[F,Double,Position[F,Double]] = {
+    Step.pointR(for {
+      components <- guides.traverse { case (g, c) => (g - entity.pos) traverse (x => Dist.stdUniform.map(_ * x * c)) }
+    } yield X *: components.foldLeft(V._velocity.get(entity.state))(_ + _))
+  }
 
   // Step to evaluate the particle, without any modifications
   def evalParticle[S,F[_]:Foldable](entity: Particle[S,F,Double]) =

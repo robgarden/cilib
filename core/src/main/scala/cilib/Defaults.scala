@@ -2,6 +2,7 @@ package cilib
 
 import _root_.scala.Predef.{any2stringadd => _}
 import scalaz._
+import Scalaz._
 import PSO._
 import spire.algebra._
 import spire.implicits._
@@ -27,6 +28,20 @@ object Defaults {
       p3      <- updateVelocity(p2, v)
       updated <- updatePBest(p3)
     } yield One(updated)
+
+def constrictionPSO[S,F[_]:Traverse](
+  X: Double,
+  guideStrategies: List[(Guide[S,F,Double],Double)]
+)(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+  collection => x => for {
+    guides  <- guideStrategies.map { case (gs, c) => gs(collection, x) }.sequenceU
+    guidesAndCo = guides.zip(guideStrategies.map(_._2))
+    v       <- velocityWithConstriction(x, guidesAndCo, X)
+    p       <- stdPosition(x, v)
+    p2      <- evalParticle(p)
+    p3      <- updateVelocity(p2, v)
+    updated <- updatePBest(p3)
+  } yield cilib.One(updated)
 
   def cognitive[S,F[_]:Traverse](
     w: Double,

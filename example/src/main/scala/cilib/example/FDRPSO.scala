@@ -1,3 +1,32 @@
+// package cilib
+// package example
+
+// import cilib.Defaults.constrictionPSO
+
+// import scalaz.effect._
+// import scalaz.effect.IO.putStrLn
+// import scalaz.std.list._
+// import spire.implicits._
+
+// object FDRPSO extends SafeApp {
+
+//   val sum = Problems.spherical
+
+//   // Define a normal GBest PSO and run it for a single iteration
+//   val cognitive = (Guide.pbest[Mem[List,Double],List,Double], 1.0)
+//   val social = (Guide.gbest[Mem[List,Double],List], 1.0)
+//   val fdr = (Guide.fdr[Mem[List,Double]], 1.0)
+
+//   val fdrPSO = constrictionPSO(0.729844, List(cognitive, social, fdr))
+
+//   // RVar
+//   val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(-5.12),closed(5.12))^10, 20)
+//   val syncGBest = Iteration.sync(fdrPSO)
+
+//   // Our IO[Unit] that runs at the end of the world
+//   override val runc: IO[Unit] =
+//     putStrLn(Runner.repeat(1000, syncGBest, swarm).run(Min)(sum).run(RNG.fromTime).toString)
+// }
 package cilib
 package example
 
@@ -11,7 +40,7 @@ import effect.IO.putStrLn
 import spire.implicits._
 import pl.project13.scala.rainbow._
 
-object FERPSO extends SafeApp {
+object FDRPSO extends SafeApp {
   import java.io._
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) = {
@@ -56,14 +85,15 @@ object FERPSO extends SafeApp {
     w  <- List(0.1, 0.3, 0.5, 0.7, 0.9)
     c1 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
     c2 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
-  } yield (w, c1, c2)
+    c3 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
+  } yield (w, c1, c2, c3)
 
   val repeats = 30
   val iterations = 1000
 
-  val output = "/Users/robertgarden/Desktop/results/fer"
+  val output = "/Users/robgarden/Dropbox/results/fdr"
 
-  val strat = "fer"
+  val strat = "fdr"
 
   println()
   println(s"Running: '${strat.magenta}':")
@@ -86,21 +116,20 @@ object FERPSO extends SafeApp {
 
       print(s"${prob.name.yellow}")
 
-      val s = (1 to prob.dim).toList.map(_ => math.pow(prob.u - prob.l,2)).sum
-
       val averages = for {
-        (w, c1, c2) <- params
+        (w, c1, c2, c3) <- params
 
         cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1)
-        (strategy, guide) = ("fer", (Guide.fer[Mem[List,Double],List](s), c2))
+        social    = (Guide.gbest[Mem[List,Double],List], c2)
+        fdr       = (Guide.fdr[Mem[List,Double]], c3)
 
-        ferPSO = constrictionPSO(w, List(cognitive, guide))
+        fdrPSO = constrictionPSO(w, List(cognitive, social, fdr))
 
         bests = for {
           i <- 0 until repeats
 
           swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(prob.l),closed(prob.u))^prob.dim, 20)
-          syncGBest = Iteration.sync(ferPSO)
+          syncGBest = Iteration.sync(fdrPSO)
 
           finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).run(RNG init 1)._2
           fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
@@ -118,13 +147,13 @@ object FERPSO extends SafeApp {
 
         avg = bests.toList.traverse(x => x).map(l => l.sum / l.length).getOrElse(-666.0)
 
-      } yield s"$strategy,$iterations,$repeats,$probClass,${prob.name},$dim,$w,$c1,$c2,$avg"
+      } yield s"$strat,$iterations,$repeats,$probClass,${prob.name},$dim,$w,$c1,$c2,$c3,$avg"
 
       println()
 
       printToFile(new File(s"$output/${strat}_${probClass}_${prob.name}.txt")) { p =>
 
-        p.println(s"Strategy,Iterations,Repeat,ProblemClass,Problem,Dimension,w,c1,c2,avgbest")
+        p.println(s"$strat,Iterations,Repeat,ProblemClass,Problem,Dimension,w,c1,c2,c3,avgbest")
         averages.foreach(p.println)
 
       }

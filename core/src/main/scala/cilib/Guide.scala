@@ -1,5 +1,11 @@
 package cilib
 
+import scalaz._
+import Scalaz._
+import spire.math.abs
+import spire.implicits._
+
+
 object Guide {
 
   def identity[S,F[_],A]: Guide[S,F,A] =
@@ -22,11 +28,7 @@ object Guide {
   def lbest[S,F[_]](n: Int)(implicit M: Memory[S,F,Double]) =
     nbest(Selection.indexNeighbours[Particle[S,F,Double]](n))
 
-  import scalaz._
-  import Scalaz._
-  import spire.implicits._
-
-  def fer[S,F[_]: Foldable](s: Double)(implicit M: Memory[S,F,Double]): Guide[S,F,Double] = {
+  def fer[S,F[_]: Foldable](s: Double)(implicit M: Memory[S,F,Double]): Guide[S,F,Double] =
     (collection, x) => Step.withOpt(o => RVar.point {
       val sorted = collection.map(e => M._memory.get(e.state)).sortWith((a, c) => Fitness.fittest(a,c) run o)
 
@@ -58,8 +60,43 @@ object Guide {
         chosen.getOrElse(x)
       }
 
-       collection.filter(_ != x).reduceLeft((a, b) => choose(a, b)).pos
+       collection.filter(_ != x).reduce(choose).pos
     })
-  }
+
+  def fdr[S](implicit M: Memory[S,List,Double]): Guide[S,List,Double] =
+    (collection, x) => Step.withOpt(o => RVar.point {
+
+      def ratioWithValue(j: Particle[S,List,Double], d: Int) = {
+        val pj = M._memory.get(j.state)
+        val zipped = pj.pos.zip(x.pos.pos)
+        val dimension = zipped.zipWithIndex
+          .find { case ((_, _), i) => i == d }
+          .map  { case ((a, b), _) => (a, b) }
+          .toMaybe
+
+        for {
+          fpj <- pj.fit
+          fx  <- x.pos.fit
+          (pjd, xd) <- dimension
+          numer = fpj.fold(_.v,_.v) - fx.fold(_.v,_.v)
+          denom = abs(pjd - xd)
+        } yield (numer / denom, pjd)
+      }
+
+      def bestRatio(a: (Double,Double), b: (Double,Double)) =
+        if (a._1 > b._1) a else b
+
+      val col = collection.filter(_ != x)
+      val zipped = x.pos.pos.toList.zipWithIndex
+
+      val pn = for {
+        (_, d) <- zipped
+        best = col.traverse(j => ratioWithValue(j, d)).map(_.reduce(bestRatio))
+      } yield best
+
+      val pos = pn.sequence.map(_.map(_._2))
+
+      pos.map(Position(_)).getOrElse(x.pos)
+    })
 
 }

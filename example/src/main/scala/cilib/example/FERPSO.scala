@@ -61,7 +61,7 @@ object FERPSO extends SafeApp {
   val repeats = 30
   val iterations = 1000
 
-  val output = "/Users/robertgarden/Desktop/results/fer"
+  val output = "/Users/robertgarden/Dropbox/results/fer"
 
   val strat = "fer"
 
@@ -102,7 +102,7 @@ object FERPSO extends SafeApp {
           swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(prob.l),closed(prob.u))^prob.dim, 20)
           syncGBest = Iteration.sync(ferPSO)
 
-          finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).run(RNG init 1)._2
+          finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).eval(RNG init i.toLong)
           fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
           best = fitnesses.map(_.min)
 

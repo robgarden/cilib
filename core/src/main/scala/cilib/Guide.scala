@@ -41,15 +41,20 @@ object Guide {
 
       def ratio(a: Particle[S,F,Double], b: Particle[S,F,Double]) = {
         val denom = euclid(M._memory.get(a.state).pos, M._memory.get(b.state).pos)
-        val numer = for {
+        val numerator = for {
           fpa <- M._memory.get(a.state).fit
           fpb <- M._memory.get(b.state).fit
-        } yield fpa.fold(_.v,_.v) - fpb.fold(_.v,_.v)
+          numer = fpa.fold(_.v,_.v) - fpb.fold(_.v,_.v)
+          numer1 = o match {
+            case Min => 1.0 / numer
+            case Max => numer
+          }
+        } yield numer1
 
         for {
-          n <- numer
+          numer <- numerator
           s <- scale
-        } yield s * (n / denom)
+        } yield s * (numer / denom)
       }
 
       def choose(a: Particle[S,F,Double], b: Particle[S,F,Double]) = {
@@ -79,8 +84,12 @@ object Guide {
           fx  <- x.pos.fit
           (pjd, xd) <- dimension
           numer = fpj.fold(_.v,_.v) - fx.fold(_.v,_.v)
+          numer1 = o match {
+            case Min => 1.0 / numer
+            case Max => numer
+          }
           denom = abs(pjd - xd)
-        } yield (numer / denom, pjd)
+        } yield (numer1 / denom, pjd)
       }
 
       def bestRatio(a: (Double,Double), b: (Double,Double)) =

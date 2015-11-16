@@ -91,7 +91,7 @@ object FDRPSO extends SafeApp {
   val repeats = 30
   val iterations = 1000
 
-  val output = "/Users/robgarden/Dropbox/results/fdr"
+  val output = "/home/robertgarden/Dropbox/fdr"
 
   val strat = "fdr"
 

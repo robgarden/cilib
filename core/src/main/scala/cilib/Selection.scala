@@ -37,7 +37,7 @@ object Selection {
 
   def wheel[A]: Selection[A] =
     (l: List[A], a: A) => l match {
-      case x :: xs if (x == l) => l
-      case x :: _ => List(x, a)
+      case x :: _ if (x == l) => l
+      case x :: xs => List(x, a)
     }
 }

@@ -46,7 +46,7 @@ object Guide {
           fpb <- M._memory.get(b.state).fit
           numer = fpa.fold(_.v,_.v) - fpb.fold(_.v,_.v)
           numer1 = o match {
-            case Min => 1.0 / numer
+            case Min => -numer
             case Max => numer
           }
         } yield numer1
@@ -85,7 +85,7 @@ object Guide {
           (pjd, xd) <- dimension
           numer = fpj.fold(_.v,_.v) - fx.fold(_.v,_.v)
           numer1 = o match {
-            case Min => 1.0 / numer
+            case Min => -numer
             case Max => numer
           }
           denom = abs(pjd - xd)

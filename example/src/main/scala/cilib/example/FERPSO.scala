@@ -11,6 +11,9 @@ import effect.IO.putStrLn
 import spire.implicits._
 import pl.project13.scala.rainbow._
 
+import scala.concurrent._
+import ExecutionContext.Implicits.global
+
 object FERPSO extends SafeApp {
   import java.io._
 
@@ -61,7 +64,7 @@ object FERPSO extends SafeApp {
   val repeats = 30
   val iterations = 1000
 
-  val output = "/Users/robertgarden/Dropbox/results/fer"
+  val output = "/Users/robertgarden/Desktop/fer"
 
   val strat = "fer"
 
@@ -77,66 +80,56 @@ object FERPSO extends SafeApp {
   println("Starting...".yellow)
   println()
 
-  problemsClasses.foreach { case (probClass, problems) =>
-
-    println(s"Problem class: ${probClass.yellow}")
-    println("========================")
-
-    problems.foreach { prob =>
-
-      print(s"${prob.name.yellow}")
-
+  def ferFuture(w: Double, c1: Double, c2: Double, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
       val s = (1 to prob.dim).toList.map(_ => math.pow(prob.u - prob.l,2)).sum
+      val cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1)
+      val guide = (Guide.fer[Mem[List,Double],List](s), c2)
 
-      val averages = for {
-        (w, c1, c2) <- params
+      val ferPSO = constrictionPSO(w, List(cognitive, guide))
 
-        cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1)
-        (strategy, guide) = ("fer", (Guide.fer[Mem[List,Double],List](s), c2))
+      val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(prob.l),closed(prob.u))^prob.dim, 20)
+      val syncGBest = Iteration.sync(ferPSO)
+      val finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).eval(RNG init seed)
+      val fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
 
-        ferPSO = constrictionPSO(w, List(cognitive, guide))
+      println(s"Seed: $seed")
 
-        bests = for {
-          i <- 0 until repeats
+      fitnesses.map(_.min)
+  }
 
-          swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(prob.l),closed(prob.u))^prob.dim, 20)
-          syncGBest = Iteration.sync(ferPSO)
 
-          finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).eval(RNG init i.toLong)
-          fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
-          best = fitnesses.map(_.min)
+  def ferFutureLine(w: Double, c1: Double, c2: Double, probClass: String, prob: ProblemDef): Future[String] = {
+    val futures: Future[List[Maybe[Double]]] = Future.sequence((0 until repeats).toList.map(i => ferFuture(w, c1, c2, prob, i.toLong)))
+    val futuresAvg: Future[Double] = futures.map(lf => lf.sequence.map(l => l.sum / l.length).getOrElse(-666))
+    futuresAvg.map(avg => s"$strat,$iterations,$repeats,$probClass,${prob.name},$dim,$w,$c1,$c2,$avg")
+  }
 
-        } yield best
+  def problemFuture(probClass: String, prob: ProblemDef): Future[List[String]] = {
+    val futureLines: List[Future[String]] = for {
+      (w, c1, c2) <- params
+    } yield ferFutureLine(w, c1, c2, probClass, prob)
 
-        index = params.indexOf((w, c1, c2))
-        myprint = {
-          print("\r")
-          print(s"${prob.name.yellow} ")
-          val percent = (index.toDouble + 1.0) / params.size * 100
-          print(f"$percent%2.2f" + "%")
-        }
+    println()
+    println(s"Done ${prob.name}")
+    println()
 
-        avg = bests.toList.traverse(x => x).map(l => l.sum / l.length).getOrElse(-666.0)
+    Future.sequence(futureLines)
+  }
 
-      } yield s"$strategy,$iterations,$repeats,$probClass,${prob.name},$dim,$w,$c1,$c2,$avg"
-
-      println()
-
-      printToFile(new File(s"$output/${strat}_${probClass}_${prob.name}.txt")) { p =>
-
+  def writeOut(s: String, probClass: String, name: String, lines: List[String]) = {
+      printToFile(new File(s"$output/${s}_${probClass}_${name}.txt")) { p =>
         p.println(s"Strategy,Iterations,Repeat,ProblemClass,Problem,Dimension,w,c1,c2,avgbest")
-        averages.foreach(p.println)
-
+        lines.foreach(p.println)
       }
+  }
 
+  problemsClasses.foreach { case (probClass, problems) =>
+    val probsFutures: List[(ProblemDef, Future[List[String]])] =  problems.map(p => (p, problemFuture(probClass, p)))
+    probsFutures.foreach {
+      case (p, f) => f onSuccess { case ls => writeOut(strat, probClass, p.name, ls) }
     }
-
-    println()
-    println("Done".green)
-    println()
   }
 
   // Our IO[Unit] that runs at the end of the world
-  override val runc: IO[Unit] =
-    putStrLn("")
+  override val runc: IO[Unit] = putStrLn("Done")
 }

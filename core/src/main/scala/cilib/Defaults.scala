@@ -29,20 +29,52 @@ object Defaults {
       updated <- updatePBest(p3)
     } yield One(updated)
 
-def constrictionPSO[S,F[_]:Traverse](
-  X: Double,
-  guideStrategies: List[(Guide[S,F,Double],Double)]
-)(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
-  collection => x => for {
-    guides  <- guideStrategies.map { case (gs, c) => gs(collection, x) }.sequenceU
-    guidesAndCo = guides.zip(guideStrategies.map(_._2))
-    v       <- velocityWithConstriction(x, guidesAndCo, X)
-    p       <- stdPosition(x, v)
-    p2      <- evalParticle(p)
-    p3      <- updateVelocity(p2, v)
-    updated <- updatePBest(p3)
-  } yield cilib.One(updated)
+  def gbestConstrained[S,F[_]:Traverse:Zip:SolutionRep](
+    w: Double,
+    c1: Double,
+    c2: Double,
+    cognitive: Guide[S,F,Double],
+    social: Guide[S,F,Double],
+    bounds: F[Interval[Double]]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x => for {
+      cog     <- cognitive(collection, x)
+      soc     <- social(collection, x)
+      v       <- stdVelocity(x, soc, cog, w, c1, c2)
+      p       <- stdPosition(x, v)
+      p2      <- evalParticle(p)
+      p3      <- updateVelocity(p2, v)
+      updated <- updatePBestIfInBounds(p3, bounds)
+    } yield One(updated)
 
+    def constrictionPSO[S,F[_]:Traverse](
+      X: Double,
+    guideStrategies: List[(Guide[S,F,Double],Double)]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x => for {
+      guides  <- guideStrategies.map { case (gs, c) => gs(collection, x) }.sequenceU
+      guidesAndCo = guides.zip(guideStrategies.map(_._2))
+      v       <- velocityWithConstriction(x, guidesAndCo, X)
+      p       <- stdPosition(x, v)
+      p2      <- evalParticle(p)
+      p3      <- updateVelocity(p2, v)
+      updated <- updatePBest(p3)
+    } yield cilib.One(updated)
+
+    // def constrictionPSOConstrained[S,F[_]:Traverse](
+    //   X: Double,
+    // guideStrategies: List[(Guide[S,F,Double],Double)]
+  // )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    // collection => x => for {
+    //   guides  <- guideStrategies.map { case (gs, c) => gs(collection, x) }.sequenceU
+    //   guidesAndCo = guides.zip(guideStrategies.map(_._2))
+    //   v       <- velocityWithConstriction(x, guidesAndCo, X)
+    //   p       <- stdPosition(x, v)
+    //   p1      <-
+    //   p2      <- evalParticle(p)
+    //   p3      <- updateVelocity(p2, v)
+    //   updated <- updatePBest(p3)
+    // } yield cilib.One(updated)
   def cognitive[S,F[_]:Traverse](
     w: Double,
     c1: Double,

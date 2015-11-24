@@ -19,37 +19,7 @@ object WheelPSO extends SafeApp {
   }
 
   val dim = 10
-
-  val problemsClasses = Map(
-    "um-s" -> List(
-      ProblemDef("absolute", Problems.absolute, -100.0, 100.0, dim),
-      ProblemDef("differentPowers", Problems.differentPowers, -100.0, 100.0, dim),
-      ProblemDef("hyperEllipsoid", Problems.hyperEllipsoid, -10.0, 10.0, dim),
-      ProblemDef("powellSum", Problems.powellSum, -1.0, 1.0, dim),
-      ProblemDef("spherical", Problems.spherical, -100.0, 100.0, dim)
-    ),
-    "um-ns" -> List(
-      ProblemDef("brent", Problems.brent, -10.0, 10.0, dim),
-      ProblemDef("dixonPrice", Problems.dixonPrice, -10.0, 10.0, dim),
-      ProblemDef("katsuura", Problems.katsuura, 0.0, 100.0, dim),
-      ProblemDef("quadric", Problems.quadric, -100.0, 100.0, dim),
-      ProblemDef("zakharov", Problems.zakharov, -5.0, 10.0, dim)
-    ),
-    "mm-s" -> List(
-      ProblemDef("alpine1", Problems.alpine1, -10.0, 10.0, dim),
-      ProblemDef("michalewicz", Problems.michalewicz, 0.0, Math.PI, dim),
-      ProblemDef("step1", Problems.step1, -100.0, 100.0, dim),
-      ProblemDef("vincent", Problems.vincent, 0.25, 10.0, dim),
-      ProblemDef("weierstrass", Problems.weierstrass, -0.5, 0.5, dim)
-    ),
-    "mm-ns" -> List(
-      ProblemDef("ackley", Problems.ackley, -32.768, 32.768, dim),
-      ProblemDef("eggHolder", Problems.eggHolder, -512.0, 512.0, dim),
-      ProblemDef("exponential1", Problems.exponential1, -1.0, 1.0, dim),
-      ProblemDef("norwegian", Problems.norwegian, -1.1, 1.1, dim),
-      ProblemDef("salomon", Problems.salomon, -100.0, 100.0, dim)
-    )
-  )
+  val problemsClasses = Problems.problemsClasses(dim)
 
   val params = for {
     w  <- List(0.1, 0.3, 0.5, 0.7, 0.9)
@@ -60,7 +30,7 @@ object WheelPSO extends SafeApp {
   val repeats = 30
   val iterations = 1000
 
-  val output = "/Users/robertgarden/Dropbox/results/wheel"
+  val output = "/home/robertgarden/Dropbox/results/wheel"
 
   val cognitive = Guide.pbest[Mem[List,Double],List,Double]
   val wheel = Selection.wheel[Particle[Mem[List,Double], List, Double]]

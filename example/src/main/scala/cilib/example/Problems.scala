@@ -21,6 +21,8 @@ import spire.implicits._
     - Penalty(x, y) -> A valid fitness, but the solution has had a penalty of `y` applied
 
   */
+case class ProblemDef(name: String, problem: Eval[List,Double], l: Double, u: Double, dim: Int)
+
 object Problems {
 
   /* Some of the more common static benchmark problems */
@@ -39,9 +41,10 @@ object Problems {
   // uni-modal / non-separable
   val brent = Unconstrained { (a: List[Double]) => Valid(Benchmarks.brent(a.convertNel)) }
   val dixonPrice = Unconstrained { (a: List[Double]) => Valid(Benchmarks.dixonPrice(a.convertSized2And)) }
-  val katsuura = Unconstrained { (a: List[Double]) => Valid(Benchmarks.katsuura(a.convertNel)) }
+  //val katsuura = Unconstrained { (a: List[Double]) => Valid(Benchmarks.katsuura(a.convertNel)) }
   val quadric = Unconstrained { (a: List[Double]) => Valid(Benchmarks.quadric(a.convertNel)) }
   val zakharov = Unconstrained { (a: List[Double]) => Valid(Benchmarks.zakharov(a.convertNel)) }
+  val brown = Unconstrained { (a: List[Double]) => Valid(Benchmarks.brown(a.convertSized2And)) }
 
   // multi-modal / non-separable
   val ackley    = Unconstrained { (a: List[Double]) => Valid(Benchmarks.ackley(a.convertNel)) }
@@ -54,8 +57,42 @@ object Problems {
   val alpine1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.alpine1(a.convertNel)) }
   val michalewicz = Unconstrained { (a: List[Double]) => Valid(Benchmarks.michalewicz(10)(a.convertNel)) }
   val step1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.step1(a.convertNel)) }
-  val vincent = Unconstrained { (a: List[Double]) => Valid(Benchmarks.vincent(a.convertNel)) }
+  //val vincent = Unconstrained { (a: List[Double]) => Valid(Benchmarks.vincent(a.convertNel)) }
   val weierstrass = Unconstrained { (a: List[Double]) => Valid(Benchmarks.weierstrass(a.convertNel)) }
+  val cosineMixture = Unconstrained { (a: List[Double]) => Valid(Benchmarks.cosineMixture(a.convertNel)) }
+
+  def problemsClasses(dim: Int) = Map(
+    // "um-s" -> List(
+    //   ProblemDef("absolute", Problems.absolute, -100.0, 100.0, dim),
+    //   ProblemDef("differentPowers", Problems.differentPowers, -100.0, 100.0, dim),
+    //   ProblemDef("hyperEllipsoid", Problems.hyperEllipsoid, -10.0, 10.0, dim),
+    //   ProblemDef("powellSum", Problems.powellSum, -1.0, 1.0, dim),
+    //   ProblemDef("spherical", Problems.spherical, -100.0, 100.0, dim)
+    // ),
+    "um-ns" -> List(
+      // ProblemDef("brent", Problems.brent, -10.0, 10.0, dim),
+      // ProblemDef("dixonPrice", Problems.dixonPrice, -10.0, 10.0, dim),
+      //ProblemDef("katsuura", Problems.katsuura, 0.0, 100.0, dim)
+      ProblemDef("brown", Problems.brown, -1.0, 1.0, dim)
+      // ProblemDef("quadric", Problems.quadric, -100.0, 100.0, dim),
+      // ProblemDef("zakharov", Problems.zakharov, -5.0, 10.0, dim)
+    ),
+    "mm-s" -> List(
+      // ProblemDef("alpine1", Problems.alpine1, -10.0, 10.0, dim),
+      // ProblemDef("michalewicz", Problems.michalewicz, 0.0, Math.PI, dim),
+      // ProblemDef("step1", Problems.step1, -100.0, 100.0, dim),
+      //ProblemDef("vincent", Problems.vincent, 0.25, 10.0, dim)
+      ProblemDef("cosineMixture", Problems.cosineMixture, -1.0, 1.0, dim)
+      // ProblemDef("weierstrass", Problems.weierstrass, -0.5, 0.5, dim)
+    )
+    // "mm-ns" -> List(
+    //   ProblemDef("ackley", Problems.ackley, -32.768, 32.768, dim),
+    //   ProblemDef("eggHolder", Problems.eggHolder, -512.0, 512.0, dim),
+    //   ProblemDef("exponential1", Problems.exponential1, -1.0, 1.0, dim),
+    //   ProblemDef("norwegian", Problems.norwegian, -1.1, 1.1, dim),
+    //   ProblemDef("salomon", Problems.salomon, -100.0, 100.0, dim)
+    // )
+  )
 
 //  def hyperEllipsoid = Unconstrained { (a: List[Double]) => Valid(Benchmarks.hyperEllipsoid(a.convertNel)) }
 //  def schwefel221 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.schwefel221(a.convertSized1And)) }

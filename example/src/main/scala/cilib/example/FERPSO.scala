@@ -64,7 +64,7 @@ object FERPSO extends SafeApp {
   val repeats = 30
   val iterations = 1000
 
-  val output = "/Users/robertgarden/Desktop/fer"
+  val output = "/home/robertgarden/Dropbox/results/fer"
 
   val strat = "fer"
 
@@ -92,11 +92,10 @@ object FERPSO extends SafeApp {
       val finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).eval(RNG init seed)
       val fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
 
-      println(s"Seed: $seed")
-
+      val percent = params.indexOf((w,c1,c2)).toDouble / params.length * 100
+      println(f"${prob.name} $seed $percent%2.2f" + "%")
       fitnesses.map(_.min)
   }
-
 
   def ferFutureLine(w: Double, c1: Double, c2: Double, probClass: String, prob: ProblemDef): Future[String] = {
     val futures: Future[List[Maybe[Double]]] = Future.sequence((0 until repeats).toList.map(i => ferFuture(w, c1, c2, prob, i.toLong)))
@@ -108,10 +107,6 @@ object FERPSO extends SafeApp {
     val futureLines: List[Future[String]] = for {
       (w, c1, c2) <- params
     } yield ferFutureLine(w, c1, c2, probClass, prob)
-
-    println()
-    println(s"Done ${prob.name}")
-    println()
 
     Future.sequence(futureLines)
   }
@@ -131,5 +126,5 @@ object FERPSO extends SafeApp {
   }
 
   // Our IO[Unit] that runs at the end of the world
-  override val runc: IO[Unit] = putStrLn("Done")
+  override val runc: IO[Unit] = putStrLn("Starting...")
 }

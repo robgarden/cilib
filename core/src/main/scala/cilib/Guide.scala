@@ -30,12 +30,18 @@ object Guide {
 
   def fer[S,F[_]: Foldable](s: Double)(implicit M: Memory[S,F,Double]): Guide[S,F,Double] =
     (collection, x) => Step.withOpt(o => RVar.point {
-      val sorted = collection.map(e => M._memory.get(e.state)).sortWith((a, c) => Fitness.fittest(a,c) run o)
+      val sorted = collection.map(e => M._memory.get(e.state)).sortWith((a, c) => Fitness.fittest(a, c) run o)
 
       val scale = for {
         b <- sorted.head.fit
         w <- sorted.last.fit
-      } yield s / (b.fold(_.v,_.v) - w.fold(_.v,_.v))
+        bf = b.fold(_.v,_.v)
+        bw = w.fold(_.v,_.v)
+        denom = o match {
+          case Min => bw - bf
+          case Max => bf - bw
+        }
+      } yield s / denom
 
       val euclid = Distance.euclidean[F,Double]
 

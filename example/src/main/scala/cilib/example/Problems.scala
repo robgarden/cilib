@@ -50,8 +50,9 @@ object Problems {
   val ackley    = Unconstrained { (a: List[Double]) => Valid(Benchmarks.ackley(a.convertNel)) }
   val eggHolder = Unconstrained { (a: List[Double]) => Valid(Benchmarks.eggHolder(a.convertSized2And)) }
   val exponential1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.exponential1(a.convertNel)) }
-  val norwegian = Unconstrained { (a: List[Double]) => Valid(Benchmarks.norwegian(a.convertNel)) }
+//  val norwegian = Unconstrained { (a: List[Double]) => Valid(Benchmarks.norwegian(a.convertNel)) }
   val salomon = Unconstrained { (a: List[Double]) => Valid(Benchmarks.salomon(a.convertNel)) }
+  val mishra1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.mishra1(a.convertNel)) }
 
   // multi-modal / separable
   val alpine1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.alpine1(a.convertNel)) }
@@ -62,37 +63,36 @@ object Problems {
   val cosineMixture = Unconstrained { (a: List[Double]) => Valid(Benchmarks.cosineMixture(a.convertNel)) }
 
   def problemsClasses(dim: Int) = Map(
-    "um-s" -> List(
-      ProblemDef("absolute", Problems.absolute, -100.0, 100.0, dim),
-      ProblemDef("differentPowers", Problems.differentPowers, -100.0, 100.0, dim),
-      ProblemDef("hyperEllipsoid", Problems.hyperEllipsoid, -10.0, 10.0, dim),
-      ProblemDef("powellSum", Problems.powellSum, -1.0, 1.0, dim),
-      ProblemDef("spherical", Problems.spherical, -100.0, 100.0, dim)
-    ),
-    "um-ns" -> List(
-      ProblemDef("brent", Problems.brent, -10.0, 10.0, dim),
-      ProblemDef("dixonPrice", Problems.dixonPrice, -10.0, 10.0, dim),
-      //ProblemDef("katsuura", Problems.katsuura, 0.0, 100.0, dim)
-      ProblemDef("brown", Problems.brown, -1.0, 1.0, dim),
-      ProblemDef("quadric", Problems.quadric, -100.0, 100.0, dim),
-      ProblemDef("zakharov", Problems.zakharov, -5.0, 10.0, dim)
-    ),
-    "mm-s" -> List(
-      ProblemDef("alpine1", Problems.alpine1, -10.0, 10.0, dim),
-      ProblemDef("michalewicz", Problems.michalewicz, 0.0, Math.PI, dim),
-      ProblemDef("step1", Problems.step1, -100.0, 100.0, dim),
-      //ProblemDef("vincent", Problems.vincent, 0.25, 10.0, dim)
-      ProblemDef("cosineMixture", Problems.cosineMixture, -1.0, 1.0, dim),
-      ProblemDef("weierstrass", Problems.weierstrass, -0.5, 0.5, dim)
-    ),
+    // "um-s" -> List(
+    //   ProblemDef("absolute", Problems.absolute, -100.0, 100.0, dim),
+    //   ProblemDef("differentPowers", Problems.differentPowers, -100.0, 100.0, dim),
+    //   ProblemDef("hyperEllipsoid", Problems.hyperEllipsoid, -10.0, 10.0, dim),
+    //   ProblemDef("powellSum", Problems.powellSum, -1.0, 1.0, dim),
+    //   ProblemDef("spherical", Problems.spherical, -100.0, 100.0, dim)
+    // ),
+    // "um-ns" -> List(
+    //   ProblemDef("brent", Problems.brent, -10.0, 10.0, dim),
+    //   ProblemDef("dixonPrice", Problems.dixonPrice, -10.0, 10.0, dim),
+    //   ProblemDef("brown", Problems.brown, -1.0, 1.0, dim),
+    //   ProblemDef("quadric", Problems.quadric, -100.0, 100.0, dim),
+    //   ProblemDef("zakharov", Problems.zakharov, -5.0, 10.0, dim)
+    // ),
+    // "mm-s" -> List(
+    //   ProblemDef("alpine1", Problems.alpine1, -10.0, 10.0, dim),
+    //   ProblemDef("michalewicz", Problems.michalewicz, 0.0, Math.PI, dim),
+    //   ProblemDef("step1", Problems.step1, -100.0, 100.0, dim),
+    //   ProblemDef("cosineMixture", Problems.cosineMixture, -1.0, 1.0, dim),
+    //   ProblemDef("weierstrass", Problems.weierstrass, -0.5, 0.5, dim)
+    // ),
     "mm-ns" -> List(
-      ProblemDef("ackley", Problems.ackley, -32.768, 32.768, dim),
-      ProblemDef("eggHolder", Problems.eggHolder, -512.0, 512.0, dim),
-      ProblemDef("exponential1", Problems.exponential1, -1.0, 1.0, dim),
-      ProblemDef("norwegian", Problems.norwegian, -1.1, 1.1, dim),
-      ProblemDef("salomon", Problems.salomon, -100.0, 100.0, dim)
+      // ProblemDef("ackley", Problems.ackley, -32.768, 32.768, dim),
+      // ProblemDef("eggHolder", Problems.eggHolder, -512.0, 512.0, dim),
+      // ProblemDef("exponential1", Problems.exponential1, -1.0, 1.0, dim),
+      // ProblemDef("salomon", Problems.salomon, -100.0, 100.0, dim)
+        ProblemDef("mishra1", Problems.mishra1, 0.0, 1.0, dim)
     )
   )
+
 
 //  def hyperEllipsoid = Unconstrained { (a: List[Double]) => Valid(Benchmarks.hyperEllipsoid(a.convertNel)) }
 //  def schwefel221 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.schwefel221(a.convertSized1And)) }

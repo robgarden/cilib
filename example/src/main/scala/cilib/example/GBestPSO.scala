@@ -27,7 +27,7 @@ object GBestPSO extends SafeApp {
     c2 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
   } yield (w, c1, c2)
 
-  val repeats = 5
+  val repeats = 30
   val iterations = 1000
 
   val output = "/home/robertgarden/Dropbox/results/star"

@@ -37,6 +37,8 @@ import Scalaz._
 import effect._
 import effect.IO.putStrLn
 
+import scalaz.concurrent.Task
+
 import spire.implicits._
 import pl.project13.scala.rainbow._
 

@@ -180,9 +180,10 @@ lazy val example = project.dependsOn(core).dependsOn(benchmarks)
   .settings(noPublishSettings)
   .settings(Seq(
     libraryDependencies ++= Seq(
-      "org.scalaz"                  %% "scalaz-core"   % scalazVersion,
-      "org.scalaz"                  %% "scalaz-effect" % scalazVersion,
-      "pl.project13.scala"          %% "rainbow"       % "0.2"
+      "org.scalaz"                  %% "scalaz-core"         % scalazVersion,
+      "org.scalaz"                  %% "scalaz-concurrent"   % scalazVersion,
+      "org.scalaz"                  %% "scalaz-effect"       % scalazVersion,
+      "pl.project13.scala"          %% "rainbow"             % "0.2"
     )
    ))
 

@@ -52,7 +52,8 @@ object Problems {
   val exponential1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.exponential1(a.convertNel)) }
 //  val norwegian = Unconstrained { (a: List[Double]) => Valid(Benchmarks.norwegian(a.convertNel)) }
   val salomon = Unconstrained { (a: List[Double]) => Valid(Benchmarks.salomon(a.convertNel)) }
-  val mishra1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.mishra1(a.convertNel)) }
+//  val mishra1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.mishra1(a.convertNel)) }
+  val pathological = Unconstrained { (a: List[Double]) => Valid(Benchmarks.pathological(a.convertSized2And)) }
 
   // multi-modal / separable
   val alpine1 = Unconstrained { (a: List[Double]) => Valid(Benchmarks.alpine1(a.convertNel)) }
@@ -89,7 +90,8 @@ object Problems {
       // ProblemDef("eggHolder", Problems.eggHolder, -512.0, 512.0, dim),
       // ProblemDef("exponential1", Problems.exponential1, -1.0, 1.0, dim),
       // ProblemDef("salomon", Problems.salomon, -100.0, 100.0, dim)
-        ProblemDef("mishra1", Problems.mishra1, 0.0, 1.0, dim)
+        // ProblemDef("mishra1", Problems.mishra1, 0.0, 1.0, dim)
+        ProblemDef("pathological", Problems.pathological, -100.0, 100.0, dim)
     )
   )
 

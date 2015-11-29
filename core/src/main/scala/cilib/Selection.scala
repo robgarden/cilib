@@ -27,6 +27,7 @@ object Selection {
     }
 
   import Scalaz._
+  import spire.math._
   import spire.implicits._
 
   val euclidean = Distance.euclidean[List,Double]
@@ -39,5 +40,22 @@ object Selection {
     (l: List[A], a: A) => l match {
       case x :: _ if (x == l) => l
       case x :: xs => List(x, a)
+    }
+
+  val hamming = Distance.hamming[List,Boolean]
+
+  def hypercube[A]: Selection[A] =
+    (l: List[A], a: A) => {
+      val length = (log(l.length.toDouble) / log(2)).toInt
+
+      def pad(x: Seq[Boolean]) =
+        if (x.length < length) (List.fill(length - x.length)(false) ++ x) else x
+
+      def binary(a: Int) = pad(a.toBinaryString.map(x => if (x == '1') true else false)).toList
+
+      val index = l.indexOf(a)
+      val bin = binary(index)
+
+      l.zipWithIndex.filter { case (xi, i) => hamming(binary(i), bin) == 1 }.map(_._1)
     }
 }

@@ -11,7 +11,8 @@ import effect.IO.putStrLn
 import spire.implicits._
 import pl.project13.scala.rainbow._
 
-import scalaz.concurrent.Task
+import scala.concurrent._
+import ExecutionContext.Implicits.global
 
 object HypercubePSO extends SafeApp {
   import java.io._
@@ -49,15 +50,14 @@ object HypercubePSO extends SafeApp {
   println("Starting...".yellow)
   println()
 
-  def hyperTask(w: Double, c1: Double, c2: Double, prob: ProblemDef, seed: Long): Task[Maybe[Double]] = Task {
+  def ferFuture(w: Double, c1: Double, c2: Double, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
       val cognitive = Guide.pbest[Mem[List,Double],List,Double]
-      val hypercube = Selection.hypercube[Particle[Mem[List,Double],List, Double]]
-      val (strategy, guide) = ("hypercube", Guide.nbest(hypercube))
+      val guide = Guide.nbest(Selection.hypercube[Particle[Mem[List,Double],List,Double]])
 
-      val hyperPSO = gbest(w, c1, c2, cognitive, guide)
+      val ferPSO = gbest(w, c1, c2, cognitive, guide)
 
       val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(prob.l),closed(prob.u))^prob.dim, 32)
-      val syncGBest = Iteration.sync(hyperPSO)
+      val syncGBest = Iteration.sync(ferPSO)
       val finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).eval(RNG init seed)
       val fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
 
@@ -66,18 +66,18 @@ object HypercubePSO extends SafeApp {
       fitnesses.map(_.min)
   }
 
-  def hyperTaskLine(w: Double, c1: Double, c2: Double, probClass: String, prob: ProblemDef): Task[String] = {
-    val tasks: Task[List[Maybe[Double]]] = Task.gatherUnordered((0 until repeats).toList.map(i => hyperTask(w, c1, c2, prob, i.toLong)))
-    val tasksAvg: Task[Double] = tasks.map(lf => lf.sequence.map(l => l.sum / l.length).getOrElse(-666))
-    tasksAvg.map(avg => s"$strat,$iterations,$repeats,$probClass,${prob.name},$dim,$w,$c1,$c2,$avg")
+  def ferFutureLine(w: Double, c1: Double, c2: Double, probClass: String, prob: ProblemDef): Future[String] = {
+    val futures: Future[List[Maybe[Double]]] = Future.sequence((0 until repeats).toList.map(i => ferFuture(w, c1, c2, prob, i.toLong)))
+    val futuresAvg: Future[Double] = futures.map(lf => lf.sequence.map(l => l.sum / l.length).getOrElse(-666))
+    futuresAvg.map(avg => s"$strat,$iterations,$repeats,$probClass,${prob.name},$dim,$w,$c1,$c2,$avg")
   }
 
-  def problemTasks(probClass: String, prob: ProblemDef): Task[List[String]] = {
-    val futureLines: List[Task[String]] = for {
+  def problemFuture(probClass: String, prob: ProblemDef): Future[List[String]] = {
+    val futureLines: List[Future[String]] = for {
       (w, c1, c2) <- params
-    } yield hyperTaskLine(w, c1, c2, probClass, prob)
+    } yield ferFutureLine(w, c1, c2, probClass, prob)
 
-    Task.gatherUnordered(futureLines)
+    Future.sequence(futureLines)
   }
 
   def writeOut(s: String, probClass: String, name: String, lines: List[String]) = {
@@ -88,14 +88,12 @@ object HypercubePSO extends SafeApp {
   }
 
   problemsClasses.foreach { case (probClass, problems) =>
-    val probsTasks: List[(ProblemDef, Task[List[String]])] = problems.map(p => (p, problemTasks(probClass, p)))
-    probsTasks.foreach {
-      case (p, t) => {
-        writeOut(strat, probClass, p.name, t.run)
-      }
+    val probsFutures: List[(ProblemDef, Future[List[String]])] =  problems.map(p => (p, problemFuture(probClass, p)))
+    probsFutures.foreach {
+      case (p, f) => f onSuccess { case ls => writeOut(strat, probClass, p.name, ls) }
     }
   }
 
   // Our IO[Unit] that runs at the end of the world
-  override val runc: IO[Unit] = putStrLn("Done")
+  override val runc: IO[Unit] = putStrLn("Starting...")
 }

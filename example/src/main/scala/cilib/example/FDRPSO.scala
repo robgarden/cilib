@@ -57,13 +57,12 @@ object FDRPSO extends SafeApp {
     w  <- List(0.1, 0.3, 0.5, 0.7, 0.9)
     c1 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
     c2 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
-    c3 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
-  } yield (w, c1, c2, c3)
+  } yield (w, c1, c2)
 
   val repeats = 30
   val iterations = 1000
 
-  val output = "/home/robertgarden/Dropbox/fdr"
+  val output = "/home/robertgarden/Dropbox/fdr1"
 
   val strat = "fdr"
 
@@ -89,13 +88,12 @@ object FDRPSO extends SafeApp {
       print(s"${prob.name.yellow}")
 
       val averages = for {
-        (w, c1, c2, c3) <- params
+        (w, c1, c2) <- params
 
         cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1)
-        social    = (Guide.gbest[Mem[List,Double],List], c2)
-        fdr       = (Guide.fdr[Mem[List,Double]], c3)
+        fdr       = (Guide.fdr[Mem[List,Double]], c2)
 
-        fdrPSO = constrictionPSO(w, List(cognitive, social, fdr))
+        fdrPSO = constrictionPSO(w, List(cognitive, fdr))
 
         bests = for {
           i <- 0 until repeats
@@ -119,13 +117,13 @@ object FDRPSO extends SafeApp {
 
         avg = bests.toList.traverse(x => x).map(l => l.sum / l.length).getOrElse(-666.0)
 
-      } yield s"$strat,$iterations,$repeats,$probClass,${prob.name},$dim,$w,$c1,$c2,$c3,$avg"
+      } yield s"$strat,$iterations,$repeats,$probClass,${prob.name},$dim,$w,$c1,$c2,$avg"
 
       println()
 
       printToFile(new File(s"$output/${strat}_${probClass}_${prob.name}.txt")) { p =>
 
-        p.println(s"$strat,Iterations,Repeat,ProblemClass,Problem,Dimension,w,c1,c2,c3,avgbest")
+        p.println(s"$strat,Iterations,Repeat,ProblemClass,Problem,Dimension,w,c1,c2,avgbest")
         averages.foreach(p.println)
 
       }

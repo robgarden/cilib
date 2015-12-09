@@ -31,11 +31,11 @@ object Defaults {
 
 def constrictionPSO[S,F[_]:Traverse](
   X: Double,
-  guideStrategies: List[(Guide[S,F,Double],Double)]
+  guideStrategies: List[(Guide[S,F,Double],Double,RVar[Double])]
 )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
   collection => x => for {
-    guides  <- guideStrategies.map { case (gs, c) => gs(collection, x) }.sequenceU
-    guidesAndCo = guides.zip(guideStrategies.map(_._2))
+    guides  <- guideStrategies.map { case (gs, _, _) => gs(collection, x) }.sequenceU
+    guidesAndCo = guides.zip(guideStrategies.map(_._2)).zip(guideStrategies.map(_._3)).map { case ((g,c),r) => (g,c,r) }
     v       <- velocityWithConstriction(x, guidesAndCo, X)
     p       <- stdPosition(x, v)
     p2      <- evalParticle(p)

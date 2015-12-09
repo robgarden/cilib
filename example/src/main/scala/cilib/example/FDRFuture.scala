@@ -51,8 +51,8 @@ object FDRFuture extends SafeApp {
   println()
 
   def fdrFuture(w: Double, c1: Double, c2: Double, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
-      val cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1)
-      val fdr = (Guide.fdr[Mem[List,Double]], c2)
+      val cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1, Dist.stdUniform)
+      val fdr = (Guide.fdr[Mem[List,Double]], c2, Dist.stdUniform)
 
       val fdrPSO = constrictionPSO(w, List(cognitive, fdr))
 

@@ -40,21 +40,21 @@ object PSO {
 
   def velocityWithInertia[S,F[_]:Traverse](
     entity: Particle[S,F,Double],
-    guides: List[(Position[F,Double],Double)],
+    guides: List[(Position[F,Double],Double,RVar[Double])],
     w: Double
   )(implicit V: Velocity[S,F,Double], M: Module[F[Double],Double]): Step[F,Double,Position[F,Double]] = {
     Step.pointR(for {
-      components <- guides.traverse { case (g, c) => (g - entity.pos) traverse (x => Dist.stdUniform.map(_ * x * c)) }
+      components <- guides.traverse { case (g, c, r) => (g - entity.pos) traverse (x => r.map(_ * x * c)) }
     } yield components.foldLeft(w *: V._velocity.get(entity.state))(_ + _))
   }
 
   def velocityWithConstriction[S,F[_]:Traverse](
     entity: Particle[S,F,Double],
-    guides: List[(Position[F,Double],Double)],
+    guides: List[(Position[F,Double],Double,RVar[Double])],
     X: Double
   )(implicit V: Velocity[S,F,Double], M: Module[F[Double],Double]): Step[F,Double,Position[F,Double]] = {
     Step.pointR(for {
-      components <- guides.traverse { case (g, c) => (g - entity.pos) traverse (x => Dist.stdUniform.map(_ * x * c)) }
+      components <- guides.traverse { case (g, c, r) => (g - entity.pos) traverse (x => r.map(_ * x * c)) }
     } yield X *: components.foldLeft(V._velocity.get(entity.state))(_ + _))
   }
 

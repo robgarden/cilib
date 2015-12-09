@@ -90,8 +90,8 @@ object FDRPSO extends SafeApp {
       val averages = for {
         (w, c1, c2) <- params
 
-        cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1)
-        fdr       = (Guide.fdr[Mem[List,Double]], c2)
+        cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1, Dist.stdUniform)
+        fdr       = (Guide.fdr[Mem[List,Double]], c2, Dist.stdUniform)
 
         fdrPSO = constrictionPSO(w, List(cognitive, fdr))
 

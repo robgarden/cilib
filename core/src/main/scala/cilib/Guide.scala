@@ -31,17 +31,20 @@ object Guide {
   def lbest[S,F[_]](n: Int)(implicit M: Memory[S,F,Double]) =
     nbest(Selection.indexNeighbours[Particle[S,F,Double]](n))
 
-  def fips[S,F[_]](selection: Selection[Particle[S,F,Double]], c1: Double, c2: Double)
+  import scalaz.Traverse
+
+  def fips[S,F[_]: Traverse](selection: Selection[Particle[S,F,Double]], c1: Double, c2: Double)
     (implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
 
     (collection, x) => {
       val neighbours = selection(collection, x)
       val avgGuide = neighbours.map(xj => M._memory.get(xj.state) - x.pos).reduce(_ + _)
 
-      val guide = for {
-        rt <- Dist.uniform(0.0, c1 + c2)
-        scaled = pow(rt, collection.length.toDouble)
-      } yield (scaled / neighbours.length) *: avgGuide
+      val guide = avgGuide.traverse { ai =>
+        Dist.uniform(0.0, c1 + c2).map { rt =>
+          (rt * ai) / neighbours.length
+        }
+      }
 
       Step.pointR(guide)
     }

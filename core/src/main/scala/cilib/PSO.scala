@@ -2,7 +2,7 @@ package cilib
 
 import _root_.scala.Predef.{any2stringadd => _}
 
-import scalaz._
+import scalaz.{Order => _, _}
 import scalaz.std.list._
 import scalaz.syntax.traverse._
 
@@ -64,6 +64,21 @@ object PSO {
     X: Double
   )(implicit V: Velocity[S,F,Double], M: Module[F[Double],Double]): Step[F,Double,Position[F,Double]] = {
     Step.point(X *: guides.foldLeft(V._velocity.get(entity.state))(_ + _))
+  }
+
+  def inBounds[F[_]:Foldable,A: Order](x: F[A], bounds: F[Interval[A]]) =
+    (x.toList zip bounds.toList).forall { case (xi, b) => (xi >= b.lower.value && xi <= b.upper.value) }
+
+  def updatePBestIfInBounds[S,F[_]: Traverse](
+    p: Particle[S,F,Double],
+    bounds: F[Interval[Double]]
+  )(implicit M: Memory[S,F,Double]): Step[F,Double,Particle[S,F,Double]] = {
+
+    val pbestL = M._memory
+    val pbest = (p.state applyLens pbestL).get
+    if (!inBounds(p.pos.pos, bounds)) Step.point(p)
+    else Step.liftK(Fitness.compare(p.pos, pbest).map(x =>
+      Entity(p.state applyLens pbestL set x, p.pos)))
   }
 
   // Step to evaluate the particle, without any modifications

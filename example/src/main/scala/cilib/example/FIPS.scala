@@ -52,11 +52,12 @@ object FIPS extends SafeApp {
 
   def fipsFuture(w: Double, c1: Double, c2: Double, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
     val guide = (Guide.fips[Mem[List,Double],List]((c,_) => c, c1, c2))
+    val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
-    val ferPSO = constrictionPSONoCo(w, List(guide))
+    val fipsPSO = constrictionPSONoCo(w, List(guide), domain.list)
 
-    val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(prob.l),closed(prob.u))^prob.dim, 20)
-    val syncGBest = Iteration.sync(ferPSO)
+    val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
+    val syncGBest = Iteration.sync(fipsPSO)
     val finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).eval(RNG init seed)
     val fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
 

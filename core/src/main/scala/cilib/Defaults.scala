@@ -49,9 +49,14 @@ def constrictionPSO[S,F[_]:Traverse](
     bounds: F[Interval[Double]]
   )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
     collection => x => for {
-      guides  <- guideStrategies.map(gs => gs(collection, x)).sequenceU
+      // doing these two steps first resolves particles immediately flying off into space
+      // must re look at original PSO
+      p0  <- evalParticle(x)
+      p01 <- updatePBestIfInBounds(p0, bounds)
+
+      guides  <- guideStrategies.traverseU(gs => gs(collection, x))
       v       <- velocityWithConstrictionNoCo(x, guides, X)
-      p       <- stdPosition(x, v)
+      p       <- stdPosition(p01, v)
       p2      <- evalParticle(p)
       p3      <- updateVelocity(p2, v)
       updated <- updatePBestIfInBounds(p3, bounds)

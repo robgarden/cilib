@@ -43,6 +43,19 @@ def constrictionPSO[S,F[_]:Traverse](
     updated <- updatePBest(p3)
   } yield cilib.One(updated)
 
+  def constrictionPSONoCo[S,F[_]:Traverse](
+    X: Double,
+    guideStrategies: List[Guide[S,F,Double]]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x => for {
+      guides  <- guideStrategies.map(gs => gs(collection, x)).sequenceU
+      v       <- velocityWithConstrictionNoCo(x, guides, X)
+      p       <- stdPosition(x, v)
+      p2      <- evalParticle(p)
+      p3      <- updateVelocity(p2, v)
+      updated <- updatePBest(p3)
+    } yield cilib.One(updated)
+
   def cognitive[S,F[_]:Traverse](
     w: Double,
     c1: Double,

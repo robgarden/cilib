@@ -1,10 +1,13 @@
 package cilib
 
-import scalaz._
-import Scalaz._
-import spire.math.abs
-import spire.implicits._
+import _root_.scala.Predef.{any2stringadd => _}
 
+//import scalaz._
+//import Scalaz._
+import spire.math.{abs,pow}
+import spire.algebra.Module
+//import spire.implicits._
+//import spire.algebra._
 
 object Guide {
 
@@ -27,6 +30,24 @@ object Guide {
 
   def lbest[S,F[_]](n: Int)(implicit M: Memory[S,F,Double]) =
     nbest(Selection.indexNeighbours[Particle[S,F,Double]](n))
+
+  def fips[S,F[_]](selection: Selection[Particle[S,F,Double]], c1: Double, c2: Double)
+    (implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+
+    (collection, x) => {
+      val neighbours = selection(collection, x)
+      val avgGuide = neighbours.map(xj => M._memory.get(xj.state) - x.pos).reduce(_ + _)
+
+      val guide = for {
+        rt <- Dist.uniform(0.0, c1 + c2)
+        scaled = pow(rt, collection.length.toDouble)
+      } yield (scaled / neighbours.length) *: avgGuide
+
+      Step.pointR(guide)
+    }
+
+    import scalaz._, Scalaz._
+    import spire.implicits._
 
   def fer[S,F[_]: Foldable](s: Double)(implicit M: Memory[S,F,Double]): Guide[S,F,Double] =
     (collection, x) => Step.withOpt(o => RVar.point {

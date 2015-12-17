@@ -58,6 +58,14 @@ object PSO {
     } yield X *: components.foldLeft(V._velocity.get(entity.state))(_ + _))
   }
 
+  def velocityWithConstrictionNoCo[S,F[_]:Traverse](
+    entity: Particle[S,F,Double],
+    guides: List[Position[F,Double]],
+    X: Double
+  )(implicit V: Velocity[S,F,Double], M: Module[F[Double],Double]): Step[F,Double,Position[F,Double]] = {
+    Step.point(X *: guides.foldLeft(V._velocity.get(entity.state))(_ + _))
+  }
+
   // Step to evaluate the particle, without any modifications
   def evalParticle[S,F[_]:Foldable](entity: Particle[S,F,Double]) =
     Entity.eval[S,F,Double](x => x)(entity)

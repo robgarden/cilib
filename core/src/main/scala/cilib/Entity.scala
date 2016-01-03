@@ -6,6 +6,8 @@ import scalaz._
 import Scalaz._
 
 import spire.math._
+import spire.algebra.{Monoid => _, _}
+import spire.implicits._
 
 final case class Entity[S,F[_],A](state: S, pos: Position[F,A])
 
@@ -78,7 +80,6 @@ object Position {
     def zeroed(implicit F: Functor[F], A: Monoid[A]): Position[F,A] =
       x.map(_ => A.zero)
 
-    import spire.algebra._
     def + (other: Position[F,A])(implicit M: Module[F[A],A]): Position[F,A] =
       Point(M.plus(x.pos, other.pos))
 
@@ -89,6 +90,26 @@ object Position {
 
     def *: (scalar: A)(implicit M: Module[F[A],A]): Position[F,A] =
       Point(M.timesl(scalar, x.pos))
+
+    def dot(other: Position[F,A])(implicit F: Zip[F], F1: Foldable[F], F2: Ring[A]): A =
+      x.pos.fzip(other.pos).foldLeft(F2.zero) { case (a, b) => a + (b._1 * b._2) }
+
+    def project(other: Position[F,A])(implicit F: Zip[F], F1: Foldable[F], F2: Field[A], M: Module[F[A],A]): Position[F,A] = {
+      if ((other dot other) == F2.zero) F2.zero *: x
+      else ((x dot other) / (other dot other)) *: other
+    }
+
+    def magnitude(implicit F: Foldable[F], R: Ring[A], N: NRoot[A]): A =
+      sqrt(x.pos.foldLeft(R.zero)((a, b) => a + (b ** 2)))
+
+    def orthogonalize(vs: NonEmptyList[Position[F,A]])(implicit F: Zip[F], F1: Foldable[F], F2: Field[A], M: Module[F[A],A]): Position[F,A] =
+      vs.foldLeft(x)((a, b) => a - a.project(b))
+
+    def isZero(implicit R: Rig[A], F: Foldable[F]): Boolean = x.pos.toList.forall(_ == R.zero)
+
+    def normalize(implicit F: Foldable[F], R: Field[A], N: NRoot[A], M: Module[F[A],A]): Position[F,A] =
+      if (x.isZero) x
+      else (R.one / x.magnitude) *: x
   }
 
   implicit def positionFitness[F[_],A] = new Fitness[Position[F,A]] {
@@ -107,6 +128,10 @@ object Position {
 
   def createCollection[A](f: Position[List,Double] => A)(domain: NonEmptyList[Interval[Double]], n: Int)(implicit ev: SolutionRep[List]): RVar[List[A]] =
     createPositions(domain,n).map(_.map(f))
+
+  import spire.algebra.{Module,Field}
+  def mean[F[_],A](positions: NonEmptyList[Position[F,A]])(implicit M: Module[F[A],A], A: Field[A]) =
+    (A.one / positions.size.toDouble) *: positions.list.reduce(_ + _)
 }
 
 trait SolutionRep[F[_]]

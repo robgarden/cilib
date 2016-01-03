@@ -111,6 +111,23 @@ def constrictionPSO[S,F[_]:Traverse](
       //updated <- updatePBestIfInBounds(p3, bounds)
     } yield cilib.One(updated)
 
+  def pcxPSOPrev[S,F[_]:Traverse](
+    guide: Guide[S,F,Double],
+    bounds: F[Interval[Double]]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], P: Previous[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x => for {
+      // doing these two steps first resolves particles immediately flying off into space
+      // must re look at original PSO
+      p0      <- evalParticle(x)
+      p01     <- updatePBestIfInBounds(p0, bounds)
+      g       <- guide(collection, p01)
+      p       <- updateVelocity(p01, g)
+      updated <- positionWithPrev(p, g)
+      //p2      <- evalParticle(p)
+      //p3      <- updateVelocity(p2, g)
+      //updated <- updatePBestIfInBounds(p3, bounds)
+    } yield cilib.One(updated)
+
   // This is only defined for the gbest topology because the "method" described in Edwin's
   // paper for alternate topologies _does not_ make sense. I can only assume that there is
   // some additional research that needs to be done to correctly create an algorithm to

@@ -23,6 +23,9 @@ object PSO {
   )(implicit A: Module[F[A],A]): Step[F,A,Particle[S,F,A]] =
     Step.point(_position.modify((_: Position[F,A]) + v)(c))
 
+  def positionWithPrev[S,F[_]](entity: Particle[S,F,Double], p: Position[F,Double])(implicit P: Previous[S,F,Double]): Step[F,Double,Particle[S,F,Double]] =
+    Step.point(Entity(entity.state applyLens P._previous set entity.pos, p))
+
   // Dist \/ Double (scalar value)
   // This needs to be fleshed out to cater for the parameter constants // remember to extract Dists
   def stdVelocity[S,F[_]:Traverse](

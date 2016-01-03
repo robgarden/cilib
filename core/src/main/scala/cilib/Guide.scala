@@ -170,7 +170,7 @@ object Guide {
           }
         }
 
-        val child = solutions.last + (sigma1 *: e_eta.head)
+        val child = x.pos + (sigma1 *: e_eta.head)
 
         e_eta.tail.foldLeft(child) { (c, e) => c + (sigma2 *: ((dd / (k - 1)) *: e)) }
       }

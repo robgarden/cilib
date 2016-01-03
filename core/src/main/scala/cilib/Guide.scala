@@ -148,12 +148,13 @@ object Guide {
         n         <- gb(collection, x)
         i         <- identity(collection, x)
         p         <- pb(collection, x)
-        parents   =  NonEmptyList(n, i, p)
-        solutions <- Step.pointR(RVar.shuffle(parents.list))
+        //parents   =  NonEmptyList(n, i, p)
+        //solutions <- Step.pointR(RVar.shuffle(parents.list))
+        solutions =  NonEmptyList(p, i, n)
         sigma1    <- Step.pointR(Dist.gaussian(0.0, s1))
         sigma2    <- Step.pointR(Dist.gaussian(0.0, s2))
       } yield {
-        val mean = Position.mean(parents)
+        val mean = Position.mean(solutions)
         val k = 3
 
         val initEta = NonEmptyList(solutions.last - mean)

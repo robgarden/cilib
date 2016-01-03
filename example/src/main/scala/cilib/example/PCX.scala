@@ -26,8 +26,8 @@ object PCX extends SafeApp {
   val problemsClasses = Problems.problemsClasses(dim)
 
   val params = for {
-    s1 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
-    s2 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
+    s1 <- List(0.3, 0.7, 1.1, 1.5, 1.9, 2.3, 2.7, 3.1, 3.5, 3.9)
+    s2 <- List(0.3, 0.7, 1.1, 1.5, 1.9, 2.3, 2.7, 3.1, 3.5, 3.9)
   } yield (s1, s2)
 
   val repeats = 30

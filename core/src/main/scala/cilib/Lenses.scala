@@ -28,6 +28,23 @@ trait Charge[A] {
   def _charge: Lens[A,Double]
 }
 
+case class Prev[F[_],A](b: Position[F,A], p: Position[F,A], v: Position[F,A])
+
+trait Previous[S,F[_],A] {
+  def _previous: Lens[S, Position[F,A]]
+}
+
+object Previous {
+  implicit object PrevPosMemory
+      extends Memory[Prev[List,Double],List,Double]
+      with Velocity[Prev[List,Double],List,Double]
+      with Previous[Prev[List,Double],List,Double] {
+
+    def _memory   = Lens[Prev[List,Double],Position[List,Double]](_.b)(b => a => a.copy(b = b))
+    def _velocity = Lens[Prev[List,Double], Position[List,Double]](_.v)(b => a => a.copy(v = b))
+    def _previous = Lens[Prev[List,Double], Position[List,Double]](_.p)(b => a => a.copy(p = b))
+  }
+}
 
 object Lenses {
   // Base Entity lenses

@@ -2,18 +2,19 @@ package cilib
 
 import _root_.scala.Predef.{any2stringadd => _}
 
-//import scalaz._
-//import Scalaz._
+// import scalaz._
+// import Scalaz._
 import spire.math.{abs,pow}
 import spire.algebra.Module
-//import spire.implicits._
-//import spire.algebra._
 import cilib.Position._
 
 object Guide {
 
   def identity[S,F[_],A]: Guide[S,F,A] =
     (_, x) => Step.point(x.pos)
+
+  def previous[S,F[_],A](implicit P: Previous[S,F,A]): Guide[S,F,A] =
+    (_, x) => Step.point(P._previous.get(x.state))
 
   def pbest[S,F[_],A](implicit M: Memory[S,F,A]): Guide[S,F,A] =
     (_, x) => Step.point(M._memory.get(x.state))
@@ -139,40 +140,63 @@ object Guide {
       pos.map(Position(_)).getOrElse(x.pos)
     })
 
-  def pcx[S,F[_]](s1: Double, s2: Double)(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double], F: Zip[F], F1: Foldable[F]): Guide[S,F,Double] =
+  def pcxBase[F[_]: Foldable : Zip](parents: NonEmptyList[Position[F,Double]], s1: Double, s2: Double)(implicit M: Module[F[Double],Double]): Position[F,Double] = {
+    val mean = Position.mean(parents)
+    val k = parents.size
+
+    val initEta = NonEmptyList(parents.last - mean)
+    val (dd, e_eta) = parents.foldLeft((0.0, initEta)) { (a, b) =>
+      val d = b - mean
+
+      if (d.isZero) a
+      else {
+        val e = d.orthogonalize(a._2)
+
+        if (e.isZero) a
+        else (a._1 + e.magnitude, a._2 append NonEmptyList(e.normalize))
+      }
+    }
+
+    val child = parents.last + (s1 *: e_eta.head)
+
+    val distance = if (k > 2) dd / (k - 1) else 0.0
+    e_eta.tail.foldLeft(child) { (c, e) => c + (s2 *: (distance *: e)) }
+  }
+
+  def pcx[S,F[_]: Foldable : Zip](s1: Double, s2: Double)(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
     (collection, x) => {
       val gb = gbest
       val pb = pbest
 
       for {
-        n         <- gb(collection, x)
-        i         <- identity(collection, x)
         p         <- pb(collection, x)
-        //parents   =  NonEmptyList(n, i, p)
-        //solutions <- Step.pointR(RVar.shuffle(parents.list))
-        solutions =  NonEmptyList(p, i, n)
+        i         <- identity(collection, x)
+        n         <- gb(collection, x)
+        parents   =  NonEmptyList(p, i, n)
+        sigma1    <- Step.pointR(Dist.gaussian(0.0, s1))
+        sigma2    <- Step.pointR(Dist.gaussian(0.0, s2))
+      } yield pcxBase(parents, sigma1, sigma2)
+    }
+
+  implicit def positionOrder[F[_]: Foldable]: Order[Position[F,Double]] = Order.orderBy(_.magnitude)
+
+  def pcxPrev[S,F[_]: Foldable : Zip](s1: Double, s2: Double)(implicit M: Memory[S,F,Double], P: Previous[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+    (collection, x) => {
+      val gb = gbest
+      val pb = pbest
+      val prev = previous
+
+      for {
+        p         <- pb(collection, x)
+        i         <- identity(collection, x)
+        n         <- gb(collection, x)
+        pv        <- prev(collection, x)
+        parents   =  NonEmptyList(p, i, n)
         sigma1    <- Step.pointR(Dist.gaussian(0.0, s1))
         sigma2    <- Step.pointR(Dist.gaussian(0.0, s2))
       } yield {
-        val mean = Position.mean(solutions)
-        val k = 3
-
-        val initEta = NonEmptyList(solutions.last - mean)
-        val (dd, e_eta) = solutions.foldLeft((0.0, initEta)) { (a, b) =>
-          val d = b - mean
-
-          if (d.isZero) a
-          else {
-            val e = d.orthogonalize(a._2)
-
-            if (e.isZero) a
-            else (a._1 + e.magnitude, a._2 append NonEmptyList(e.normalize))
-          }
-        }
-
-        val child = solutions.last + (sigma1 *: e_eta.head)
-
-        e_eta.tail.foldLeft(child) { (c, e) => c + (sigma2 *: ((dd / (k - 1)) *: e)) }
+        if (parents.distinct.size == 3) pcxBase(parents, sigma1, sigma2)
+        else pcxBase((pv <:: parents).distinct, sigma1, sigma2)
       }
     }
 }

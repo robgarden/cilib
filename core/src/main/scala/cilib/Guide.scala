@@ -1,6 +1,6 @@
 package cilib
 
-import _root_.scala.Predef.{any2stringadd => _}
+import _root_.scala.Predef.{any2stringadd => _, _}
 
 // import scalaz._
 // import Scalaz._
@@ -160,10 +160,10 @@ object Guide {
     val distance = if (k > 2) dd / (k - 1) else 0.0
 
     for {
-      child  <- Step.point[F,Double,Position[F,Double]](parents.last + (s1 *: e_eta.head))
       sigma1 <- Step.pointR(Dist.gaussian(0.0, s1))
       sigma2 <- Step.pointR(Dist.gaussian(0.0, s2))
-    } yield e_eta.tail.foldLeft(child) { (c, e) => c + (s2 *: (distance *: e)) }
+      child  <- Step.point[F,Double,Position[F,Double]](parents.last + (sigma1 *: e_eta.head))
+    } yield e_eta.tail.foldLeft(child) { (c, e) => c + (sigma2 *: (distance *: e)) }
   }
 
   def pcx[S,F[_]: Foldable : Zip](s1: Double, s2: Double)(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
@@ -199,55 +199,56 @@ object Guide {
     }
 
 
-  def pcxRepeater[S,F[_]:Foldable:Zip](offspring: Position[F,Double], nb: Position[F,Double], retries: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]) = {
+  def pcxRepeater[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+    (collection, x) => {
 
-    val offspringS = Step.point[F,Double,Position[F,Double]](offspring)
+      val guide = Guide.nbest[S,F](selection)
+      val nbest = guide(collection, x)
 
-    def repeat(r: Int): Step[F,Double,Position[F,Double]] =
-      if (r >= retries) Step.point(nb)
-      else {
-        for {
-          child    <- offspringS
-          c        <- Step.evalF(child)
-          isBetter <- Step.withOpt(o => RVar.point(Fitness.fittest(c, nb).run(o)))
-          chosen   <- if (isBetter) offspringS else repeat(r + 1)
+      val pcxCO = pcx[S,F](s1, s2)
+      val offspring = pcxCO(collection, x).flatMap(Step.evalF[F,Double])
+
+      def repeat(r: Int): Step[F,Double,Position[F,Double]] =
+        if (r >= retries) nbest
+        else for {
+          nb       <- nbest
+          child    <- offspring
+          isBetter <- Step.withOpt(o => RVar.point(Fitness.fittest(child, nb).run(o)))
+          chosen   <- if (isBetter) offspring else repeat(r + 1)
         } yield chosen
-      }
 
       repeat(0)
-  }
-
-  def repeatingPCX[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
-    (collection, x) => {
-
-      val guide = Guide.nbest[S,F](selection)
-      val nbest = guide(collection, x)
-      val pcxCO = pcx[S,F](s1, s2)
-
-      for {
-        child    <- pcxCO(collection, x)
-        nb       <- nbest
-        repeated <- pcxRepeater(child, nb, retries, selection)
-      } yield repeated
-
     }
 
-  def repeatingPCXNParents[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, n: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
-    (collection, x) => {
+  // def repeatingPCX[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+  //   (collection, x) => {
 
-      val sample = RVar.sample(n, collection)
-      val parents = sample.run.map(_.flatMap(l => l.toNel.toMaybe)).map(_.getOrElse(sys.error("Need 3 parents")))
-      val guide = Guide.nbest[S,F](selection)
-      val nbest = guide(collection, x)
+  //     val guide = Guide.nbest[S,F](selection)
 
-      for {
-        ps       <- Step.pointR(parents.map(l => l.map(_.pos)))
-        child    <- pcxBase(ps, s1, s2)
-        nb       <- nbest
-        repeated <- pcxRepeater(child, nb, retries, selection)
-      } yield repeated
+  //     for {
+  //       child    <- pcxCO(collection, x)
+  //       nbest    <- guide(collection, x)
+  //       repeated <- pcxRepeater(child, nbest, retries, selection)
+  //     } yield repeated
 
-    }
+  //   }
+
+  // def repeatingPCXNParents[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, n: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+  //   (collection, x) => {
+
+  //     val sample = RVar.sample(n, collection)
+  //     val parents = sample.run.map(_.flatMap(l => l.toNel.toMaybe)).map(_.getOrElse(sys.error("Need 3 parents")))
+  //     val guide = Guide.nbest[S,F](selection)
+  //     val nbest = guide(collection, x)
+
+  //     for {
+  //       ps       <- Step.pointR(parents.map(l => l.map(_.pos)))
+  //       child    <- pcxBase(ps, s1, s2)
+  //       nb       <- nbest
+  //       repeated <- pcxRepeater(child, nb, retries, selection)
+  //     } yield repeated
+
+  //   }
 
 
   def pcxBolzmann[S,F[_]: Foldable : Zip](s1: Double, s2: Double, temp: Double, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =

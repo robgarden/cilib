@@ -29,15 +29,16 @@ object PCXRepeating extends SafeApp {
     // w  <- List(0.1, 0.3, 0.5, 0.7, 0.9)
     // c1 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
     // c2 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
-    s1 <- List(0.3, 0.7, 1.1, 1.5, 1.9, 2.3, 2.7, 3.1, 3.5, 3.9)
-    s2 <- List(0.3, 0.7, 1.1, 1.5, 1.9, 2.3, 2.7, 3.1, 3.5, 3.9)
+    s1 <- List(1.0, 2.0, 3.0, 5.0, 10.0)
+    s2 <- List(1.0, 2.0, 3.0, 5.0, 10.0)
     rr <- List(1, 5, 10, 20, 50, 100)
   } yield (s1, s2, rr)
 
-  val repeats = 30
+  val repeats = 1
   val iterations = 1000
 
-  val output = "/home/robertgarden/Dropbox/results/pcx-repeating"
+  // val output = "/home/robertgarden/Dropbox/results/pcx-repeating"
+  val output = "/Users/robertgarden/Desktop/pcx-repeating"
 
   val strat = "pcx-repeating"
 
@@ -55,11 +56,12 @@ object PCXRepeating extends SafeApp {
 
   def pcxFuture(s1: Double, s2: Double, rr: Int, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
     val cognitive = Guide.pbest[Mem[List,Double],List,Double]
-    val guide = Guide.repeatingPCX[Mem[List,Double],List](s1, s2, rr, (c, _) => c)
+    val guide = Guide.pcxRepeater[Mem[List,Double],List](s1, s2, rr, (c, _) => c)
 
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
-    val pcx = gbestBounded(0.729844, 1.496180, 1.496180, cognitive, guide, domain.list)
+    // val pcx = gbestBounded(0.729844, 1.496180, 1.496180, cognitive, guide, domain.list)
+    val pcx = cilib.Defaults.pcxPSO(guide, domain.list)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
     val syncGBest = Iteration.sync(pcx)
@@ -68,6 +70,7 @@ object PCXRepeating extends SafeApp {
 
     val percent = params.indexOf((s1,s2,rr)).toDouble / params.length * 100
     println(f"${prob.name} $seed $percent%2.2f" + "%")
+
     fitnesses.map(_.min)
   }
 

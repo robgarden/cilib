@@ -38,13 +38,13 @@ object Defaults {
     bounds: F[Interval[Double]]
   )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
     collection => x => for {
-      cog     <- cognitive(collection, x)
-      soc     <- social(collection, x)
-      v       <- stdVelocity(x, soc, cog, w, c1, c2)
-      p       <- stdPosition(x, v)
-      p2      <- evalParticle(p)
-      p3      <- updateVelocity(p2, v)
-      updated <- updatePBestIfInBounds(p3, bounds)
+      p       <- evalParticle(x)
+      p1      <- updatePBestIfInBounds(p, bounds)
+      cog     <- cognitive(collection, p1)
+      soc     <- social(collection, p1)
+      v       <- stdVelocity(p1, soc, cog, w, c1, c2)
+      p2      <- stdPosition(p1, v)
+      updated <- updateVelocity(p2, v)
     } yield One(updated)
 
 def constrictionPSO[S,F[_]:Traverse](

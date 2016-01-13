@@ -29,9 +29,11 @@ object PCXRepeating extends SafeApp {
     // w  <- List(0.1, 0.3, 0.5, 0.7, 0.9)
     // c1 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
     // c2 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
-    s1 <- List(1.0, 2.0, 3.0, 5.0, 10.0)
-    s2 <- List(1.0, 2.0, 3.0, 5.0, 10.0)
-    rr <- List(1, 5, 10, 20, 50, 100)
+    // s1 <- List(1.0, 2.0, 3.0, 5.0, 10.0)
+    // s2 <- List(1.0, 2.0, 3.0, 5.0, 10.0)
+    s1 <- List(0.01, 0.05, 0.1, 0.2, 0.5)
+    s2 <- List(0.01, 0.05, 0.1, 0.2, 0.5)
+    rr <- List(5, 10, 20, 50, 100, 500)
   } yield (s1, s2, rr)
 
   val repeats = 1
@@ -56,7 +58,12 @@ object PCXRepeating extends SafeApp {
 
   def pcxFuture(s1: Double, s2: Double, rr: Int, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
     val cognitive = Guide.pbest[Mem[List,Double],List,Double]
-    val guide = Guide.pcxRepeater[Mem[List,Double],List](s1, s2, rr, (c, _) => c)
+
+    val s = (1 to prob.dim).toList.map(_ => math.pow(prob.u - prob.l,2)).sum
+    val sigma1 = s1 * s
+    val sigma2 = s2 * s
+
+    val guide = Guide.pcxRepeater[Mem[List,Double],List](sigma1, sigma2, rr, (c, _) => c)
 
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 

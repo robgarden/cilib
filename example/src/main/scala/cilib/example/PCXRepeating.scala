@@ -26,9 +26,6 @@ object PCXRepeating extends SafeApp {
   val problemsClasses = Problems.problemsClasses(dim)
 
   val params = for {
-    // w  <- List(0.1, 0.3, 0.5, 0.7, 0.9)
-    // c1 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
-    // c2 <- List(0.3, 0.7, 1.1, 1.5, 1.9)
     // s1 <- List(1.0, 2.0, 3.0, 5.0, 10.0)
     // s2 <- List(1.0, 2.0, 3.0, 5.0, 10.0)
     s1 <- List(0.01, 0.05, 0.1, 0.2, 0.5)
@@ -36,11 +33,10 @@ object PCXRepeating extends SafeApp {
     rr <- List(5, 10, 20, 50, 100, 500)
   } yield (s1, s2, rr)
 
-  val repeats = 1
+  val repeats = 30
   val iterations = 1000
 
-  // val output = "/home/robertgarden/Dropbox/results/pcx-repeating"
-  val output = "/Users/robertgarden/Desktop/pcx-repeating"
+  val output = "/home/robertgarden/Dropbox/results/pcx-repeating"
 
   val strat = "pcx-repeating"
 

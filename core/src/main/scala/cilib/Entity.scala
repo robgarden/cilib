@@ -102,7 +102,7 @@ object Position {
     def magnitude(implicit F: Foldable[F], R: Ring[A], N: NRoot[A]): A =
       sqrt(x.pos.foldLeft(R.zero)((a, b) => a + (b ** 2)))
 
-    def orthogonalize(vs: NonEmptyList[Position[F,A]])(implicit F: Zip[F], F1: Foldable[F], F2: Field[A], M: Module[F[A],A]): Position[F,A] =
+    def orthogonalize(vs: List[Position[F,A]])(implicit F: Zip[F], F1: Foldable[F], F2: Field[A], M: Module[F[A],A]): Position[F,A] =
       vs.foldLeft(x)((a, b) => a - a.project(b))
 
     def isZero(implicit R: Rig[A], F: Foldable[F]): Boolean = x.pos.toList.forall(_ == R.zero)
@@ -132,6 +132,16 @@ object Position {
   import spire.algebra.{Module,Field}
   def mean[F[_],A](positions: NonEmptyList[Position[F,A]])(implicit M: Module[F[A],A], A: Field[A]) =
     (A.one / positions.size.toDouble) *: positions.list.reduce(_ + _)
+
+  def orthonormalize[F[_]:Foldable:Zip, A:Field:NRoot](vs: NonEmptyList[Position[F,A]])(implicit M: Module[F[A],A]) = {
+    val bases = vs.foldLeft(NonEmptyList(vs.head)) { (ob, v) =>
+      val ui = ob.foldLeft(v) { (u, o) => u - (v.project(o)) }
+      if (ui.isZero) ob
+      else ob append NonEmptyList(ui)
+    }
+
+    bases.map(_.normalize)
+  }
 }
 
 trait SolutionRep[F[_]]

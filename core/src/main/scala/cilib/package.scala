@@ -8,6 +8,8 @@ package object cilib {
 
   type Selection[A] = (List[A], A) => List[A]
 
+  type Crossover[F[_],A] = NonEmptyList[Position[F,A]] => Step[F,A,Position[F,A]]
+
   def positive(d: Double): Maybe[Double @@ Tags.Positive] =
     if (d > 0.0) Tag.subst(Maybe.just(d))
     else Maybe.empty

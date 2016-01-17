@@ -59,7 +59,7 @@ object PCXRepeating extends SafeApp {
     val sigma1 = s1 * s
     val sigma2 = s2 * s
 
-    val guide = Guide.pcxRepeater[Mem[List,Double],List](sigma1, sigma2, rr, (c, _) => c)
+    val guide = Guide.repeatingPCX[Mem[List,Double],List](sigma1, sigma2, rr, (c, _) => c)
 
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 

@@ -140,43 +140,18 @@ object Guide {
       pos.map(Position(_)).getOrElse(x.pos)
     })
 
-  def pcxBase[F[_]: Foldable : Zip](parents: NonEmptyList[Position[F,Double]], s1: Double, s2: Double)(implicit M: Module[F[Double],Double]) = {
-    val mean = Position.mean(parents)
-    val k = parents.size
-
-    val initEta = NonEmptyList(parents.last - mean)
-    val (dd, e_eta) = parents.foldLeft((0.0, initEta)) { (a, b) =>
-      val d = b - mean
-
-      if (d.isZero) a
-      else {
-        val e = d.orthogonalize(a._2)
-
-        if (e.isZero) a
-        else (a._1 + e.magnitude, a._2 append NonEmptyList(e.normalize))
-      }
-    }
-
-    val distance = if (k > 2) dd / (k - 1) else 0.0
-
-    for {
-      sigma1 <- Step.pointR(Dist.gaussian(0.0, s1))
-      sigma2 <- Step.pointR(Dist.gaussian(0.0, s2))
-      child  <- Step.point[F,Double,Position[F,Double]](parents.last + (sigma1 *: e_eta.head))
-    } yield e_eta.tail.foldLeft(child) { (c, e) => c + (sigma2 *: (distance *: e)) }
-  }
-
   def pcx[S,F[_]: Foldable : Zip](s1: Double, s2: Double)(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
     (collection, x) => {
       val gb = gbest
       val pb = pbest
+      val pcx = Crossover.pcx[F](s1, s2)
 
       for {
         p         <- pb(collection, x)
         i         <- identity(collection, x)
         n         <- gb(collection, x)
         parents   =  NonEmptyList(p, i, n)
-        offspring <- pcxBase(parents, s1, s2)
+        offspring <- pcx(parents)
       } yield offspring
     }
 
@@ -187,6 +162,7 @@ object Guide {
       val gb = gbest
       val pb = pbest
       val prev = previous
+      val pcx = Crossover.pcx[F](s1, s2)
 
       for {
         p         <- pb(collection, x)
@@ -194,25 +170,22 @@ object Guide {
         n         <- gb(collection, x)
         pv        <- prev(collection, x)
         parents   =  NonEmptyList(p, i, n)
-        offspring <- if (parents.distinct.size == 3) pcxBase(parents, s1, s2) else pcxBase((pv <:: parents).distinct, s1, s2)
+        offspring <- if (parents.distinct.size == 3) pcx(parents) else pcx((pv <:: parents).distinct)
       } yield offspring
     }
 
-
-  def pcxRepeater[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+  def pcxRepeater[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, parents: NonEmptyList[Position[F,Double]], selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
     (collection, x) => {
-
       val guide = Guide.nbest[S,F](selection)
       val nbest = guide(collection, x)
-
-      val pcxCO = pcx[S,F](s1, s2)
-      val offspring = pcxCO(collection, x).flatMap(Step.evalF[F,Double])
+      val pcx = Crossover.pcx[F](s1, s2)
+      val offspring = pcx(parents).flatMap(Step.evalF[F,Double])
 
       def repeat(r: Int): Step[F,Double,Position[F,Double]] =
         if (r >= retries) nbest
         else for {
-          nb       <- nbest
           child    <- offspring
+          nb       <- nbest
           isBetter <- Step.withOpt(o => RVar.point(Fitness.fittest(child, nb).run(o)))
           chosen   <- if (isBetter) offspring else repeat(r + 1)
         } yield chosen
@@ -220,44 +193,44 @@ object Guide {
       repeat(0)
     }
 
-  // def repeatingPCX[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
-  //   (collection, x) => {
+  def repeatingPCX[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+    (collection, x) => {
 
-  //     val guide = Guide.nbest[S,F](selection)
+      val gb = gbest
+      val pb = pbest
 
-  //     for {
-  //       child    <- pcxCO(collection, x)
-  //       nbest    <- guide(collection, x)
-  //       repeated <- pcxRepeater(child, nbest, retries, selection)
-  //     } yield repeated
+      for {
+        p         <- pb(collection, x)
+        i         <- identity(collection, x)
+        n         <- gb(collection, x)
+        parents   =  NonEmptyList(p, i, n)
+        repeater  =  pcxRepeater(s1, s2, retries, parents, selection)
+        chosen    <- repeater(collection, x)
+      } yield chosen
+    }
 
-  //   }
+  def repeatingPCXNParents[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, n: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+    (collection, x) => {
 
-  // def repeatingPCXNParents[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, n: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
-  //   (collection, x) => {
+      val sample = RVar.sample(n, collection)
+      val parents = sample.run.map(_.flatMap(l => l.toNel.toMaybe)).map(_.getOrElse(sys.error("Need 3 parents")))
 
-  //     val sample = RVar.sample(n, collection)
-  //     val parents = sample.run.map(_.flatMap(l => l.toNel.toMaybe)).map(_.getOrElse(sys.error("Need 3 parents")))
-  //     val guide = Guide.nbest[S,F](selection)
-  //     val nbest = guide(collection, x)
+      for {
+        ps        <- Step.pointR(parents)
+        pbparents =  ps.map(p => M._memory.get(p.state))
+        repeater  =  pcxRepeater(s1, s2, retries, pbparents, selection)
+        chosen    <- repeater(collection, x)
+      } yield chosen
 
-  //     for {
-  //       ps       <- Step.pointR(parents.map(l => l.map(_.pos)))
-  //       child    <- pcxBase(ps, s1, s2)
-  //       nb       <- nbest
-  //       repeated <- pcxRepeater(child, nb, retries, selection)
-  //     } yield repeated
-
-  //   }
-
+    }
 
   def pcxBolzmann[S,F[_]: Foldable : Zip](s1: Double, s2: Double, temp: Double, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
     (collection, x) => {
       val guide = Guide.nbest(selection)
       val pb = pbest
+      val pcx = Crossover.pcx[F](s1, s2)
 
       def bolzmann(a: Position[F,Double], b: Position[F,Double]) = {
-
         val fitDiff = for {
           fa  <- a.fit
           fb  <- b.fit
@@ -265,13 +238,10 @@ object Guide {
           fbv =  fb.fold(_.v, _.v)
         } yield fav - fbv
 
-        Dist.stdUniform.map { r =>
-          fitDiff.map { f =>
-            val right = 1.0 / (1.0 + spire.math.exp(f / temp))
-            if (r > temp) b else a
-          }
-        }
-
+        Dist.stdUniform.map(r => fitDiff.map { f =>
+          val right = 1.0 / (1.0 + spire.math.exp(f / temp))
+          if (r > temp) b else a
+        })
       }
 
       for {
@@ -279,7 +249,7 @@ object Guide {
         i         <- identity(collection, x)
         n         <- guide(collection, x)
         parents   =  NonEmptyList(p, i, n)
-        child     <- pcxBase(parents, s1, s2)
+        child     <- pcx(parents)
         offspring <- Step.evalF(child)
         chosen    <- Step.pointR(bolzmann(offspring, n))
       } yield chosen.getOrElse(n)

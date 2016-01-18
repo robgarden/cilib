@@ -80,8 +80,7 @@ object PSO {
     val pbestL = M._memory
     val pbest = (p.state applyLens pbestL).get
     if (!inBounds(p.pos.pos, bounds)) Step.point(p)
-    else Step.liftK(Fitness.compare(p.pos, pbest).map(x =>
-      Entity(p.state applyLens pbestL set x, p.pos)))
+    else Step.liftK(Fitness.compare(p.pos, pbest).map(x => Entity(p.state applyLens pbestL set x, p.pos)))
   }
 
   // Step to evaluate the particle, without any modifications
@@ -123,7 +122,7 @@ object PSO {
         -1.0 *: entity.pos + nbest + w *: V._velocity.get(entity.state) + a
       ))
 
-  def barebones[S,F[_]:Traverse:Zip](p: Particle[S,F,Double], global: Position[F,Double])(implicit M: Memory[S,F,Double]) =
+  def barebones[S,F[_]:Traverse:Zip](p: Particle[S,F,Double], global: Position[F,Double])(implicit M: Memory[S,F,Double]): Step[F,Double,Position[F,Double]] =
     Step.pointR {
       val pbest = M._memory.get(p.state)
       val zipped = pbest.zip(global)
@@ -131,6 +130,20 @@ object PSO {
       val means  = zipped map { case (x,y) => (x + y) / 2.0 }
 
       (means zip sigmas) traverse (x => Dist.gaussian(x._1, x._2))
+    }
+
+  def barebonesExploit[S,F[_]:Traverse:Zip](p: Particle[S,F,Double], global: Position[F,Double], threshold: Double)(implicit M: Memory[S,F,Double]): Step[F,Double,Position[F,Double]] =
+    Step.pointR {
+      val pbest = M._memory.get(p.state)
+      val zipped = pbest.zip(global)
+      val sigmas = zipped map { case (x,y) => math.abs(x - y) }
+      val means  = zipped map { case (x,y) => (x + y) / 2.0 }
+
+      val pos = (means zip sigmas) traverse (x => Dist.gaussian(x._1, x._2))
+
+      pos.flatMap { p =>
+        (pbest zip p) traverse { case (pb, pi) => Dist.stdUniform.map(r => if (r < threshold) pb else pi) }
+      }
     }
 
   def quantum[S,F[_]:Traverse](

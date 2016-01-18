@@ -47,6 +47,33 @@ object Defaults {
       updated <- updateVelocity(p2, v)
     } yield One(updated)
 
+  def bb[S,F[_]:Traverse:Zip](
+    social: Guide[S,F,Double],
+    bounds: F[Interval[Double]]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x => for {
+      p       <- evalParticle(x)
+      p1      <- updatePBestIfInBounds(p, bounds)
+      soc     <- social(collection, p1)
+      v       <- barebones(p1, soc)
+      p2      <- replace(p1, v)
+      updated <- updateVelocity(p2, v)
+    } yield One(updated)
+
+  def bbe[S,F[_]:Traverse:Zip](
+    threshold: Double,
+    social: Guide[S,F,Double],
+    bounds: F[Interval[Double]]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x => for {
+      p       <- evalParticle(x)
+      p1      <- updatePBestIfInBounds(p, bounds)
+      soc     <- social(collection, p1)
+      v       <- barebonesExploit(p1, soc, threshold)
+      p2      <- replace(p1, v)
+      updated <- updateVelocity(p2, v)
+    } yield One(updated)
+
 def constrictionPSO[S,F[_]:Traverse](
   X: Double,
   guideStrategies: List[(Guide[S,F,Double],Double,RVar[Double])]

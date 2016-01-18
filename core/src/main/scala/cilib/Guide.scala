@@ -140,6 +140,21 @@ object Guide {
       pos.map(Position(_)).getOrElse(x.pos)
     })
 
+  def undx[S](s1: Double, s2: Double, bounds: NonEmptyList[Interval[Double]])(implicit M: Memory[S,List,Double], MO: Module[List[Double],Double]): Guide[S,List,Double] =
+    (collection, x) => {
+      val gb = gbest
+      val pb = pbest
+      val undx = Crossover.undx(s1, s2, bounds)
+
+      for {
+        p         <- pb(collection, x)
+        i         <- identity(collection, x)
+        n         <- gb(collection, x)
+        parents   =  NonEmptyList(p, i, n)
+        offspring <- undx(parents)
+      } yield offspring
+    }
+
   def pcx[S,F[_]: Foldable : Zip](s1: Double, s2: Double)(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
     (collection, x) => {
       val gb = gbest

@@ -269,4 +269,18 @@ object Guide {
         chosen    <- Step.pointR(bolzmann(offspring, n))
       } yield chosen.getOrElse(n)
     }
+
+  def nmpc[S,F[_]](implicit M: Module[F[Double], Double], F: Functor[F]): Guide[S,F,Double] =
+    (collection, x) => {
+
+      val col = collection.filter(_ != x)
+      val chosen = RVar.sample(3, col).run
+      val crossover = Crossover.nmpc[F]
+
+      for {
+        chos  <- Step.pointR(chosen)
+        child <- chos.map(c => crossover(NonEmptyList(x.pos) :::> c.map(_.pos))).getOrElse(Step.point(x.pos))
+      } yield child
+
+    }
 }

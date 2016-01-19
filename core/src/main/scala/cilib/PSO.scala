@@ -188,6 +188,9 @@ object PSO {
   def replace[S,F[_]](entity: Particle[S,F,Double], p: Position[F,Double]): Step[F,Double,Particle[S,F,Double]] =
     Step.point(entity applyLens _position set p)
 
+  def better[S,F[_],A](a: Particle[S,F,A], b: Particle[S,F,A]): Step[F,A,Particle[S,F,A]] =
+    Step.withOpt(o => RVar.point(if (Fitness.compare(a.pos, b.pos).run(o) == a.pos) a else b))
+
   def createParticle[S,F[_]](f: Position[F,Double] => Particle[S,F,Double])(pos: Position[F,Double]): Particle[S,F,Double] =
     f(pos)
 }

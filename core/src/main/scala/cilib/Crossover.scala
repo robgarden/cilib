@@ -77,4 +77,24 @@ object Crossover {
 
     }
 
+  def nmpc[F[_]](implicit M: Module[F[Double],Double]): Crossover[F,Double] =
+    parents => Step.pointR {
+
+      def norm(x: Double, sum: Double) = 5.0 * (x / sum) - 1
+
+      val coef = List.fill(4)(Dist.stdUniform).sequence
+      val sum = coef.map(_.sum)
+
+      val scaled = for {
+        cos <- coef
+        s   <- sum
+      } yield cos.map(norm(_, s))
+
+      for {
+        s       <- scaled
+        offspring = (parents.list zip s).map { case (p, si) => si *: p }.reduce(_ + _)
+      } yield offspring
+
+    }
+
 }

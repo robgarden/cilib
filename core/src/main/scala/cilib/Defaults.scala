@@ -107,6 +107,19 @@ def constrictionPSO[S,F[_]:Traverse](
       updated <- updatePBestIfInBounds(p3, bounds)
     } yield cilib.One(updated)
 
+  def nmpco[S,F[_]:Traverse](
+    guide: Guide[S,F,Double],
+    bounds: F[Interval[Double]]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x => for {
+      p       <- evalParticle(x)
+      p1      <- updatePBestIfInBounds(p, bounds)
+      co      <- guide(collection, p1)
+      p2      <- replace(p1, co)
+      evalP   <- evalParticle(p2)
+      best    <- better(p1, evalP)
+    } yield One(best)
+
   def cognitive[S,F[_]:Traverse](
     w: Double,
     c1: Double,

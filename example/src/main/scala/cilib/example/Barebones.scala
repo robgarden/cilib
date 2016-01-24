@@ -44,7 +44,7 @@ object Barebones extends SafeApp {
   println()
 
   def barebonesFuture(prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
-    val guide = Guide.gbest[Mem[List,Double],List]
+    val guide = Guide.gbest[Mem[List,Double],List,Double]
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
     val barebones = cilib.Defaults.bb(guide, domain.list)

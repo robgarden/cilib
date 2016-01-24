@@ -14,7 +14,7 @@ object OldGBest extends SafeApp {
 
   // Define a normal GBest PSO and run it for a single iteration
   val cognitive = Guide.pbest[Mem[List,Double],List,Double]
-  val social = Guide.gbest[Mem[List,Double],List]
+  val social = Guide.gbest[Mem[List,Double],List,Double]
 
   val gbestPSO = gbest(0.729844, 1.496180, 1.496180, cognitive, social)
 

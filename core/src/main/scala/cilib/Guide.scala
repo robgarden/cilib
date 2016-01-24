@@ -2,6 +2,7 @@ package cilib
 
 import _root_.scala.Predef.{any2stringadd => _, _}
 
+import scalaz.Traverse
 // import scalaz._
 // import Scalaz._
 import spire.math.{abs,pow}
@@ -19,7 +20,7 @@ object Guide {
   def pbest[S,F[_],A](implicit M: Memory[S,F,A]): Guide[S,F,A] =
     (_, x) => Step.point(M._memory.get(x.state))
 
-  def nbest[S,F[_]](selection: Selection[Particle[S,F,Double]])(implicit M: Memory[S,F,Double]): Guide[S,F,Double] = {
+  def nbest[S,F[_],A](selection: Selection[Particle[S,F,A]])(implicit M: Memory[S,F,A]): Guide[S,F,A] = {
     (collection, x) => Step.withOpt(o => RVar.point {
       selection(collection, x).
         map(e => M._memory.get(e.state)).
@@ -27,13 +28,11 @@ object Guide {
     })
   }
 
-  def gbest[S,F[_]](implicit M: Memory[S,F,Double]): Guide[S,F,Double] =
+  def gbest[S,F[_],A](implicit M: Memory[S,F,A]): Guide[S,F,A] =
     nbest((c, _) => c)
 
   def lbest[S,F[_]](n: Int)(implicit M: Memory[S,F,Double]) =
     nbest(Selection.indexNeighbours[Particle[S,F,Double]](n))
-
-  import scalaz.Traverse
 
   def fips[S,F[_]: Traverse](selection: Selection[Particle[S,F,Double]], c1: Double, c2: Double)
     (implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
@@ -51,8 +50,8 @@ object Guide {
       Step.pointR(guide)
     }
 
-    import scalaz._, Scalaz._
-    import spire.implicits._
+  import scalaz._, Scalaz._
+  import spire.implicits._
 
   def fer[S,F[_]: Foldable](s: Double)(implicit M: Memory[S,F,Double]): Guide[S,F,Double] =
     (collection, x) => Step.withOpt(o => RVar.point {
@@ -191,7 +190,7 @@ object Guide {
 
   def pcxRepeater[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, parents: NonEmptyList[Position[F,Double]], selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
     (collection, x) => {
-      val guide = Guide.nbest[S,F](selection)
+      val guide = Guide.nbest[S,F,Double](selection)
       val nbest = guide(collection, x)
       val pcx = Crossover.pcx[F](s1, s2)
       val offspring = pcx(parents).flatMap(Step.evalF[F,Double])
@@ -282,5 +281,38 @@ object Guide {
         child <- chos.map(c => crossover(NonEmptyList(x.pos) :::> c.map(_.pos))).getOrElse(Step.point(x.pos))
       } yield child
 
+    }
+
+  def improved[S,F[_],A](t: Double)(implicit M: Memory[S,F,A]): Guide[S,F,A] =
+    (collection, x) => {
+      val gb = gbest[S,F,A]
+
+      for {
+        v <- Step.pointR(Dist.stdUniform)
+        p <- Step.point(x.pos)
+        y <- Step.point(M._memory.get(x.state))
+        g <- gb(collection, x)
+      } yield {
+        if (v > 0 && v <= t) p
+        else if (v > t && v <= ((1 + t) / 2)) y
+        else g
+      }
+    }
+
+  def improvedA[S,F[_]:Functor:Traverse:Zip,A](t: Double)(implicit M: Memory[S,F,A]): Guide[S,F,A] =
+    (collection, x) => {
+      val gb = gbest[S,F,A]
+
+      for {
+        v <- Step.pointR(x.pos.traverse(xi => Dist.stdUniform))
+        p <- Step.point(x.pos)
+        y <- Step.point(M._memory.get(x.state))
+        g <- gb(collection, x)
+        zipped = (((p zip y) zip g) zip v).map { case (((a, b), c), d) => (a, b, c, d) }
+      } yield zipped.map { case (pi, yi, gi, vi) =>
+        if (vi > 0 && vi <= t) pi
+        else if (vi > t && vi <= ((1 + t) / 2)) yi
+        else gi
+      }
     }
 }

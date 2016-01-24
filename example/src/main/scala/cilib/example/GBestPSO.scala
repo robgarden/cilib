@@ -33,7 +33,7 @@ object GBestPSO extends SafeApp {
   val output = "/home/robertgarden/Dropbox/results/star"
 
   val cognitive = Guide.pbest[Mem[List,Double],List,Double]
-  val (strategy, guide) = ("star", Guide.gbest[Mem[List,Double],List])
+  val (strategy, guide) = ("star", Guide.gbest[Mem[List,Double],List,Double])
 
   import scalaz._
   import Scalaz._

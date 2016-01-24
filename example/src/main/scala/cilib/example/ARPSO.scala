@@ -1,6 +1,8 @@
 package cilib
 package example
 
+import cilib.Defaults.constrictionPSO
+
 import scalaz._
 import Scalaz._
 import effect._
@@ -12,7 +14,7 @@ import pl.project13.scala.rainbow._
 import scala.concurrent._
 import ExecutionContext.Implicits.global
 
-object BarebonesExploit extends SafeApp {
+object ARPSO extends SafeApp {
   import java.io._
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) = {
@@ -23,14 +25,17 @@ object BarebonesExploit extends SafeApp {
   val dim = 10
   val problemsClasses = Problems.problemsClasses(dim)
 
-  val params = List(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+  val params = for {
+    l <- List(5.0, 10.0, 20.0, 25.0, 50.0)
+    h <- List(55.0, 70.0, 100.0, 200.0, 500.0)
+  } yield (l, h)
 
   val repeats = 30
   val iterations = 1000
 
-  val output = "/Users/robertgarden/Desktop/barebones-exploit"
+  val output = "/home/robertgarden/Dropbox/results/arpso"
 
-  val strat = "pcx"
+  val strat = "arpso"
 
   println()
   println(s"Running: '${strat.magenta}':")
@@ -44,39 +49,44 @@ object BarebonesExploit extends SafeApp {
   println("Starting...".yellow)
   println()
 
-  def bbeFuture(t: Double, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
-    val guide = Guide.gbest[Mem[List,Double],List,Double]
+  def arpsoFuture(l: Double, h: Double, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
+    val length = math.abs(prob.u - prob.l)
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
-    val bbe = cilib.Defaults.bbe(t, guide, domain.list)
+    val cognitive = Guide.pbest[Mem[List,Double],List,Double]
+    val social = Guide.gbest[Mem[List,Double],List,Double]
+
+    val gbestPSO = Defaults.arpso(0.729844, 1.496180, 1.496180, length, l, h, cognitive, social, domain.list)
+
+  def pso: List[Particle[Mem[List,Double],List,Double]] => Particle[Mem[List,Double],List,Double] => StepS[List,Double,PSO.ARPSOParams,Result[Particle[Mem[List,Double],List,Double]]] = xs => x => StepS(gbestPSO(xs)(x))
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
-    val syncGBest = Iteration.sync(bbe)
-    val finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).eval(RNG init seed)
+    val syncGBest = Iteration.syncS(pso)
+    val finalParticles = Runner.repeatS(iterations, syncGBest, swarm).run(PSO.defaultARPSOParams).run(Min)(prob.problem).eval(RNG init seed)._2
     val fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
 
-    val percent = params.indexOf(t).toDouble / params.length * 100
+    val percent = params.indexOf((l, h)).toDouble / params.length * 100
     println(f"${prob.name} $seed $percent%2.2f" + "%")
     fitnesses.map(_.min)
   }
 
-  def bbeFutureLine(t: Double, probClass: String, prob: ProblemDef): Future[String] = {
-    val futures: Future[List[Maybe[Double]]] = Future.sequence((0 until repeats).toList.map(i => bbeFuture(t, prob, i.toLong)))
+  def arpsoFutureLine(l: Double , h: Double, probClass: String, prob: ProblemDef): Future[String] = {
+    val futures: Future[List[Maybe[Double]]] = Future.sequence((0 until repeats).toList.map(i => arpsoFuture(l, h, prob, i.toLong)))
     val futuresAvg: Future[Double] = futures.map(lf => lf.sequence.map(l => l.sum / l.length).getOrElse(-666))
-    futuresAvg.map(avg => s"$strat,$iterations,$repeats,$probClass,${prob.name},$dim,$t,$avg")
+    futuresAvg.map(avg => s"$strat,$iterations,$repeats,$probClass,${prob.name},$dim,$l,$h,$avg")
   }
 
   def problemFuture(probClass: String, prob: ProblemDef): Future[List[String]] = {
     val futureLines: List[Future[String]] = for {
-      t <- params
-    } yield bbeFutureLine(t, probClass, prob)
+      (l, h) <- params
+    } yield arpsoFutureLine(l, h, probClass, prob)
 
     Future.sequence(futureLines)
   }
 
   def writeOut(s: String, probClass: String, name: String, lines: List[String]) = {
       printToFile(new File(s"$output/${s}_${probClass}_${name}.txt")) { p =>
-        p.println(s"Strategy,Iterations,Repeat,ProblemClass,Problem,Dimension,t,avgbest")
+        p.println(s"Strategy,Iterations,Repeat,ProblemClass,Problem,Dimension,l,h,avgbest")
         lines.foreach(p.println)
       }
   }

@@ -10,4 +10,10 @@ object Runner {
       alg.run(a).map(_.toList)
     })
   }
+
+  def repeatS[F[_],A,B,S](n: Int, alg: Kleisli[StepS[F,A,S,?],List[B],Result[B]], collection: RVar[List[B]]): StepS[F,A,S,List[B]] = {
+    StepS.pointR(collection).flatMap(coll => (1 to n).toStream.foldLeftM[StepS[F,A,S,?],List[B]](coll) { (a, c) =>
+      alg.run(a).map(_.toList)
+    })
+  }
 }

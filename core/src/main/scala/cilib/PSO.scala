@@ -193,6 +193,22 @@ object PSO {
 
   def createParticle[S,F[_]](f: Position[F,Double] => Particle[S,F,Double])(pos: Position[F,Double]): Particle[S,F,Double] =
     f(pos)
+
+  import Scalaz._
+
+  def diversity[S,F[_]:Foldable](collection: List[Particle[S,F,Double]], l: Double)(implicit M: Module[F[Double],Double]): Step[F,Double,Double] = {
+    val positions = collection.map(_.pos)
+    val term1 = 1.0 / (collection.length * l)
+    val mean = positions.toNel.map(Position.mean[F,Double])
+    val distance = Distance.euclidean[F,Double]
+
+    val result = mean.map(m => positions.foldLeft(0.0)((a, b) => a + distance(b.pos, m.pos)))
+
+    Step.point(result.getOrElse(0.0))
+  }
+
+  case class ARPSOParams(dir: Double)
+  val defaultARPSOParams = ARPSOParams(1.0)
 }
 
 

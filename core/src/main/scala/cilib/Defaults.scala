@@ -1,6 +1,6 @@
 package cilib
 
-import _root_.scala.Predef.{any2stringadd => _}
+import _root_.scala.Predef.{any2stringadd => _, _}
 import scalaz._
 import Scalaz._
 import PSO._
@@ -28,6 +28,37 @@ object Defaults {
       p3      <- updateVelocity(p2, v)
       updated <- updatePBest(p3)
     } yield One(updated)
+
+  def arpso[S,F[_]:Traverse](
+    w: Double,
+    c1: Double,
+    c2: Double,
+    l: Double,
+    dlow: Double,
+    dhigh: Double,
+    cognitive: Guide[S,F,Double],
+    social: Guide[S,F,Double],
+    bounds: F[Interval[Double]]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => StateT[Step[F,Double,?], ARPSOParams, Result[Particle[S,F,Double]]] =
+    collection => x => {
+      val S = StateT.stateTMonadState[ARPSOParams, Step[F,Double,?]]
+      val hoist = StateT.StateMonadTrans[ARPSOParams]
+
+      for {
+        p       <- hoist.liftMU(evalParticle(x))
+        p1      <- hoist.liftMU(updatePBestIfInBounds(p, bounds))
+        cog     <- hoist.liftMU(cognitive(collection, p1))
+        soc     <- hoist.liftMU(social(collection, p1))
+        div     <- hoist.liftMU(diversity(collection, l))
+        state   <- S.get
+        dir      = state.dir
+        sign     = if (dir > 0 && div < dlow) -1.0 else if (dir < 0 && div > dhigh) 1.0 else dir
+        v       <- hoist.liftMU(stdVelocity(p1, soc, cog, w, sign * c1, sign * c2))
+        p2      <- hoist.liftMU(stdPosition(p1, v))
+        updated <- hoist.liftMU(updateVelocity(p2, v))
+        _       <- S.put(ARPSOParams(sign))
+      } yield One(updated)
+    }
 
   def gbestBounded[S,F[_]:Traverse](
     w: Double,
@@ -202,7 +233,7 @@ def constrictionPSO[S,F[_]:Traverse](
     collection => x => {
       val S = StateT.stateTMonadState[GCParams, Step[F,Double,?]]
       val hoist = StateT.StateMonadTrans[GCParams]
-      val g = Guide.gbest[S,F]
+      val g = Guide.gbest[S,F,Double]
       for {
         gbest   <- hoist.liftMU(g(collection, x))
         cog     <- hoist.liftMU(cognitive(collection, x))

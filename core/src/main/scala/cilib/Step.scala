@@ -58,7 +58,7 @@ object Step {
 }
 
 // Should the internal StateT not be hidden?
-final case class StepS[F[_],A,S,B] private (run: StateT[Step[F,A,?],S,B]) {
+final case class StepS[F[_],A,S,B] (run: StateT[Step[F,A,?],S,B]) {
   def map[C](f: B => C): StepS[F,A,S,C] =
     StepS(run map f)
 

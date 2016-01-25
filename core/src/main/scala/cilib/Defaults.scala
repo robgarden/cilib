@@ -227,9 +227,11 @@ def constrictionPSO[S,F[_]:Traverse](
     w: Double,
     c1: Double,
     c2: Double,
-    cognitive: Guide[S,F,Double])(
+    cognitive: Guide[S,F,Double],
+    bounds: F[Interval[Double]]
+  )(
     implicit M:Memory[S,F,Double], V:Velocity[S,F,Double],mod: Module[F[Double],Double]
-  ): List[Particle[S,F,Double]] => Particle[S,F,Double] => StateT[Step[F,Double,?], GCParams, Particle[S,F,Double]] =
+  ): List[Particle[S,F,Double]] => Particle[S,F,Double] => StateT[Step[F,Double,?], GCParams, Result[Particle[S,F,Double]]] =
     collection => x => {
       val S = StateT.stateTMonadState[GCParams, Step[F,Double,?]]
       val hoist = StateT.StateMonadTrans[GCParams]
@@ -243,7 +245,7 @@ def constrictionPSO[S,F[_]:Traverse](
         p       <- hoist.liftMU(stdPosition(x, v))
         p2      <- hoist.liftMU(evalParticle(p))
         p3      <- hoist.liftMU(updateVelocity(p2, v))
-        updated <- hoist.liftMU(updatePBest(p3))
+        updated <- hoist.liftMU(updatePBestIfInBounds(p3, bounds))
         failure <- hoist.liftMU(Step.liftK[F,Double,Boolean](Fitness.compare(x.pos, updated.pos) map (_ eq x.pos)))
         _       <- S.modify(params =>
           if (isBest) {
@@ -253,7 +255,7 @@ def constrictionPSO[S,F[_]:Traverse](
               successes = if (!failure) params.successes + 1 else 0
             )
           } else params)
-      } yield updated
+      } yield One(updated)
     }
 
   def charged[S:Charge,F[_]:Traverse](

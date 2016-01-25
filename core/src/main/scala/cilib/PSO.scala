@@ -107,7 +107,7 @@ object PSO {
     } yield (w *: V._velocity.get(entity.state)) + (c *: comp))
   }
 
-  case class GCParams(p: Double, successes: Int, failures: Int, e_s: Double, e_f: Double)
+  case class GCParams(p: Double, successes: Int, failures: Int, e_s: Int, e_f: Int)
 
   def defaultGCParams = GCParams(1.0, 0, 0, 15, 5)
 

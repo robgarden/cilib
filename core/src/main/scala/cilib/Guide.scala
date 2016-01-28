@@ -238,7 +238,7 @@ object Guide {
 
     }
 
-  def pcxBolzmann[S,F[_]: Foldable : Zip](s1: Double, s2: Double, temp: Double, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+  def pcxBoltzmann[S,F[_]: Foldable : Zip](s1: Double, s2: Double, temp: Double, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
     (collection, x) => {
       val guide = Guide.nbest(selection)
       val pb = pbest

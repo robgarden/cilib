@@ -10,7 +10,7 @@ import spire.implicits._
 
 object OldGBest extends SafeApp {
 
-  val sum = Problems.spherical
+  val sum = Problems.sphere
 
   // Define a normal GBest PSO and run it for a single iteration
   val cognitive = Guide.pbest[Mem[List,Double],List,Double]

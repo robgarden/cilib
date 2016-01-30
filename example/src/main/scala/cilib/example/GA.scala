@@ -12,7 +12,7 @@ import spire.implicits._
 import Lenses._
 
 object GAExample extends SafeApp {
-  val sum = Problems.spherical
+  val sum = Problems.sphere
 
   def onePoint(xs: List[GA.Individual]): RVar[List[GA.Individual]] =
     xs match {

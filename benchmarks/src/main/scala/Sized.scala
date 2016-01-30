@@ -56,32 +56,35 @@ object Sized {
 
   implicit class ListConvertOps(x: List[Double]) {
 
-    implicit val convertNel: NonEmptyList[Double] =
+    def convertNel: NonEmptyList[Double] =
       x.toNel.getOrElse(sys.error("Input vector must have at least 1 element"))
 
-    implicit val convertSized2: Sized2[Double] =
+    def convertSized1: Sized1[Double] =
+      toSized1(x).getOrElse(sys.error("Input vector must have 1 element"))
+
+    def convertSized2: Sized2[Double] =
       toSized2(x).getOrElse(sys.error("Input vector must have 2 elements"))
 
-    implicit val convertSized3: Sized3[Double] =
+    def convertSized3: Sized3[Double] =
       toSized3(x).getOrElse(sys.error("Input vector must have 3 elements"))
 
-    implicit val convertSized4: Sized4[Double] =
+    def convertSized4: Sized4[Double] =
       toSized4(x).getOrElse(sys.error("Input vector must have 4 elements"))
 
-    implicit val convertSized5: Sized5[Double] =
+    def convertSized5: Sized5[Double] =
       toSized5(x).getOrElse(sys.error("Input vector must have 5 elements"))
 
-    implicit val convertSized6: Sized6[Double] =
+    def convertSized6: Sized6[Double] =
       toSized6(x).getOrElse(sys.error("Input vector must have 6 elements"))
 
-    implicit val convertSized1And: Sized1And[List,Double] =
+    def convertSized1And: Sized1And[List,Double] =
       toSized1And(x).getOrElse(sys.error("Input vector must have at least 1 element"))
 
-    implicit val convertSized2And: Sized2And[List,Double] =
-      toSized2And(x).getOrElse(sys.error("Input vector must have at least 2 element"))
+    def convertSized2And: Sized2And[List,Double] =
+      toSized2And(x).getOrElse(sys.error("Input vector must have at least 2 elements"))
 
-    implicit val convertSized3And: Sized3And[List,Double] =
-      toSized3And(x).getOrElse(sys.error("Input vector must have at least 3 element"))
+    def convertSized3And: Sized3And[List,Double] =
+      toSized3And(x).getOrElse(sys.error("Input vector must have at least 3 elements"))
   }
 
 }

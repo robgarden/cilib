@@ -1269,7 +1269,7 @@ object Benchmarks {
     }
   }
 
-  def shubert1[F[_]: Foldable, A: Field : Trig : Monoid](x: Sized2[A]) = {
+  def shubert1[A: Field : Trig : Monoid](x: Sized2[A]) = {
     val (x1, x2) = x
     val t1 = (1 to 5).sumr(j => j * cos((j + 1) * x1 + j))
     val t2 = (1 to 5).sumr(j => j * cos((j + 1) * x2 + j))

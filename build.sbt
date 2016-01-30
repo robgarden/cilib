@@ -208,3 +208,4 @@ lazy val benchmarks = project
       "org.spire-math" %% "spire"       % spireVersion
     )
   )
+  .dependsOn(core)

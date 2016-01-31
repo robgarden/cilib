@@ -238,7 +238,7 @@ object Guide {
 
     }
 
-  def pcxBoltzmann[S,F[_]: Foldable : Zip](s1: Double, s2: Double, temp: Double, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+  def pcxBoltzmann[S,F[_]:Foldable:Zip](s1: Double, s2: Double, temp: Double, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
     (collection, x) => {
       val guide = Guide.nbest(selection)
       val pb = pbest
@@ -254,7 +254,7 @@ object Guide {
 
         Dist.stdUniform.map(r => fitDiff.map { f =>
           val right = 1.0 / (1.0 + spire.math.exp(f / temp))
-          if (r > temp) b else a
+          if (r > right) b else a
         })
       }
 

@@ -26,10 +26,12 @@ object NMPCO extends SafeApp {
   val repeats = 30
   val iterations = 1000
 
-  // val output = "/home/robertgarden/Dropbox/results/barebones"
-  val output = "/Users/robertgarden/Desktop/nmpco"
+  // val output = "/home/robertgarden/Dropbox/results/nmpco-prob"
+  val output = "/Users/robertgarden/Dropbox/results/nmpco-prob"
 
   val strat = "nmpco"
+
+  val params = List(0.1, 0.25, 0.5, 0.75, 1.0)
 
   println()
   println(s"Running: '${strat.magenta}':")
@@ -41,8 +43,8 @@ object NMPCO extends SafeApp {
   println("Starting...".yellow)
   println()
 
-  def nmpcoFuture(prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
-    val guide = Guide.nmpc[Mem[List,Double],List]
+  def nmpcoFuture(p: Double, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
+    val guide = Guide.nmpc[Mem[List,Double],List](p)
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
     val pso = cilib.Defaults.nmpco(guide, domain.list)
@@ -57,25 +59,31 @@ object NMPCO extends SafeApp {
     fitnesses.map(_.min)
   }
 
-  def nmpcoFutureLine(probClass: String, prob: ProblemDef): Future[String] = {
-    val futures: Future[List[Maybe[Double]]] = Future.sequence((0 until repeats).toList.map(i => nmpcoFuture(prob, i.toLong)))
+  def nmpcoFutureLine(p: Double, probClass: String, prob: ProblemDef): Future[String] = {
+    val futures: Future[List[Maybe[Double]]] = Future.sequence((0 until repeats).toList.map(i => nmpcoFuture(p, prob, i.toLong)))
     val futuresAvg: Future[Double] = futures.map(lf => lf.sequence.map(l => l.sum / l.length).getOrElse(-666))
-    futuresAvg.map(avg => s"$strat,$iterations,$repeats,$probClass,${prob.name},$dim,$avg")
+    futuresAvg.map(avg => s"$strat,$iterations,$repeats,$probClass,${prob.name},$dim,$p,$avg")
   }
 
-  def problemFuture(probClass: String, prob: ProblemDef): Future[String] = nmpcoFutureLine(probClass, prob)
+  def problemFuture(probClass: String, prob: ProblemDef): Future[List[String]] = {
+    val futureLines: List[Future[String]] = for {
+      p <- params
+    } yield nmpcoFutureLine(p, probClass, prob)
+
+    Future.sequence(futureLines)
+  }
 
   def writeOut(s: String, probClass: String, name: String, lines: List[String]) = {
       printToFile(new File(s"$output/${s}_${probClass}_${name}.txt")) { p =>
-        p.println(s"Strategy,Iterations,Repeat,ProblemClass,Problem,Dimension,avgbest")
+        p.println(s"Strategy,Iterations,Repeat,ProblemClass,Problem,Dimension,prob,avgbest")
         lines.foreach(p.println)
       }
   }
 
   problemsClasses.foreach { case (probClass, problems) =>
-    val probsFutures: List[(ProblemDef, Future[String])] =  problems.map(p => (p, problemFuture(probClass, p)))
+    val probsFutures: List[(ProblemDef, Future[List[String]])] =  problems.map(p => (p, problemFuture(probClass, p)))
     probsFutures.foreach {
-      case (p, f) => f onSuccess { case ls => writeOut(strat, probClass, p.name, List(ls)) }
+      case (p, f) => f onSuccess { case ls => writeOut(strat, probClass, p.name, ls) }
     }
   }
 

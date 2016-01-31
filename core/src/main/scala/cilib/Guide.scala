@@ -269,7 +269,7 @@ object Guide {
       } yield chosen.getOrElse(n)
     }
 
-  def nmpc[S,F[_]](implicit M: Module[F[Double], Double], F: Functor[F]): Guide[S,F,Double] =
+  def nmpc[S,F[_]:Traverse:Zip](prob: Double)(implicit M: Module[F[Double], Double], F: Functor[F]): Guide[S,F,Double] =
     (collection, x) => {
 
       val col = collection.filter(_ != x)
@@ -278,8 +278,11 @@ object Guide {
 
       for {
         chos  <- Step.pointR(chosen)
-        child <- chos.map(c => crossover(NonEmptyList(x.pos) :::> c.map(_.pos))).getOrElse(Step.point(x.pos))
-      } yield child
+        pos   <- Step.point(x.pos)
+        child <- chos.map(c => crossover(NonEmptyList(pos) :::> c.map(_.pos))).getOrElse(Step.point(x.pos))
+        probs <- Step.pointR(x.pos.traverse(_ => Dist.stdUniform))
+        zipped = pos.zip(child).zip(probs)
+      } yield zipped.map { case ((xi, ci), pi) => if (pi < prob) ci else xi }
 
     }
 

@@ -107,9 +107,11 @@ object Position {
 
     def isZero(implicit R: Rig[A], F: Foldable[F]): Boolean = x.pos.toList.forall(_ == R.zero)
 
-    def normalize(implicit F: Foldable[F], R: Field[A], N: NRoot[A], M: Module[F[A],A]): Position[F,A] =
-      if (x.isZero) x
-      else (R.one / x.magnitude) *: x
+    def normalize(implicit F: Foldable[F], R: Field[A], N: NRoot[A], M: Module[F[A],A]): Position[F,A] = {
+      val mag = x.magnitude
+      if (mag == R.zero) x
+      else (R.one / mag) *: x
+    }
   }
 
   implicit def positionFitness[F[_],A] = new Fitness[Position[F,A]] {

@@ -40,7 +40,7 @@ object Previous {
       with Velocity[Prev[List,Double],List,Double]
       with Previous[Prev[List,Double],List,Double] {
 
-    def _memory   = Lens[Prev[List,Double],Position[List,Double]](_.b)(b => a => a.copy(b = b))
+    def _memory   = Lens[Prev[List,Double], Position[List,Double]](_.b)(b => a => a.copy(b = b))
     def _velocity = Lens[Prev[List,Double], Position[List,Double]](_.v)(b => a => a.copy(v = b))
     def _previous = Lens[Prev[List,Double], Position[List,Double]](_.p)(b => a => a.copy(p = b))
   }

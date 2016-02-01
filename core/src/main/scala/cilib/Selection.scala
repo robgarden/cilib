@@ -26,6 +26,8 @@ object Selection {
       c.drop(point).take(n).toList
     }
 
+  def star[A]: Selection[A] = (l: List[A], x: A) => l
+
   import Scalaz._
   import spire.math._
   import spire.implicits._

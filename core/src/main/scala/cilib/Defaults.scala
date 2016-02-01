@@ -4,7 +4,7 @@ import _root_.scala.Predef.{any2stringadd => _, _}
 import scalaz._
 import Scalaz._
 import PSO._
-import spire.algebra._
+import spire.algebra.{Order => _, _}
 import spire.implicits._
 import spire.syntax.module._
 
@@ -216,6 +216,44 @@ def constrictionPSO[S,F[_]:Traverse](
       //p3      <- updateVelocity(p2, g)
       //updated <- updatePBestIfInBounds(p3, bounds)
     } yield cilib.One(updated)
+
+  def pcxPSODeb[S,F[_]:Traverse:Zip](
+    w: Double, c1: Double, c2: Double, s1: Double, s2: Double, rr: Int,
+    selection: Selection[Entity[S,F,Double]],
+    bounds: F[Interval[Double]]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], P: Previous[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x => {
+      val gb = Guide.gbest
+      val pb = Guide.pbest
+      val prev = Guide.previous
+      def repeater(parents: NonEmptyList[Position[F,Double]]) = Guide.pcxRepeater(s1, s2, rr, parents, selection)
+
+      implicit def positionOrder: Order[Position[F,Double]] = Order.orderBy(_.magnitude)
+
+      for {
+        p0      <- evalParticle(x)
+        p01     <- updatePBestIfInBounds(p0, bounds)
+
+        gbest   <- gb(collection, p01)
+        pbest   <- pb(collection, p01)
+        pos     <- Step.point(p01.pos)
+        pre     <- prev(collection, p01)
+
+        parents  = NonEmptyList(gbest, pbest, pos)
+        parents1 = NonEmptyList(gbest, pbest, pos, pre)
+
+        foundDistinct = (parents1.distinct.size >= 2)
+
+        g       <-
+        if (parents.distinct.size == 3) repeater(parents)(collection, x)
+        else if (parents1.distinct.size >= 2) repeater(parents1)(collection, x)
+        else stdVelocity(p01, gbest, pbest, w, c1, c2)
+
+        p <- updateVelocity(p01, g)
+        posPrev <- positionWithPrev(p, g)
+        updated <- if (!foundDistinct) stdPosition(posPrev, g) else positionWithPrev(p, g)
+      } yield cilib.One(updated)
+    }
 
   // This is only defined for the gbest topology because the "method" described in Edwin's
   // paper for alternate topologies _does not_ make sense. I can only assume that there is

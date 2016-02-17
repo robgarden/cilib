@@ -55,7 +55,7 @@ object PCXPrev extends SafeApp {
     val guide = Guide.pcxPrev[Prev[List,Double],List](s1, s2)
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
-    val pcx = pcxPSOPrev(guide, domain.list)
+    val pcx = pcxPSOPrev(guide, domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Prev(x, x.zeroed, x), x)))(domain, 20)
     val syncGBest = Iteration.sync(pcx)

@@ -54,7 +54,7 @@ object PCXRepeatingDeb extends SafeApp {
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
     val selection = Selection.star[Entity[Prev[List,Double],List,Double]]
-    val pcx = Defaults.pcxPSODeb(0.729844, 1.496180, 1.496180, s1, s2, rr, selection, domain.list)
+    val pcx = Defaults.pcxPSODeb(0.729844, 1.496180, 1.496180, s1, s2, rr, selection, domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Prev(x, x.zeroed, x), x)))(domain, 20)
     val syncGBest = Iteration.sync(pcx)

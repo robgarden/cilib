@@ -8,9 +8,9 @@ import sbtrelease.Utilities._
 import sbtunidoc.Plugin.UnidocKeys._
 import com.typesafe.sbt.SbtSite.SiteKeys._
 
-val scalazVersion     = "7.1.2"
+val scalazVersion     = "7.2.0"
 val spireVersion      = "0.9.0"
-val monocleVersion    = "1.1.1"
+val monocleVersion    = "1.2.0"
 val scalacheckVersion = "1.11.4"
 
 lazy val buildSettings = Seq(
@@ -143,6 +143,7 @@ lazy val core = project
   .settings(Seq(
     libraryDependencies ++= Seq(
       "org.scalaz"                  %% "scalaz-core"   % scalazVersion,
+      "org.scalaz"                  %% "scalaz-concurrent"   % scalazVersion,
       "org.spire-math"              %% "spire"         % spireVersion,
       "com.github.julien-truffaut"  %% "monocle-core"  % monocleVersion
     )

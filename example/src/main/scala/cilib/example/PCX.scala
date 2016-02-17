@@ -53,7 +53,7 @@ object PCX extends SafeApp {
     val guide = Guide.pcx[Mem[List,Double],List](s1, s2)
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
-    val pcx = pcxPSO(guide, domain.list)
+    val pcx = pcxPSO(guide, domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
     val syncGBest = Iteration.sync(pcx)

@@ -279,7 +279,7 @@ object Guide {
       for {
         chos  <- Step.pointR(chosen)
         pos   <- Step.point(x.pos)
-        child <- chos.map(c => crossover(NonEmptyList(pos) :::> c.map(_.pos))).getOrElse(Step.point(x.pos))
+        child <- chos.map(c => crossover(NonEmptyList(pos) :::> c.map(_.pos).toIList)).getOrElse(Step.point(x.pos))
         probs <- Step.pointR(x.pos.traverse(_ => Dist.stdUniform))
         zipped = pos.zip(child).zip(probs)
       } yield zipped.map { case ((xi, ci), pi) => if (pi < prob) ci else xi }

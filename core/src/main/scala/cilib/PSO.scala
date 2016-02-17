@@ -6,6 +6,7 @@ import scalaz.{Order => _, _}
 import scalaz.std.list._
 import scalaz.syntax.traverse._
 
+import monocle._, Monocle._
 import monocle.syntax._
 import Position._
 

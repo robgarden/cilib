@@ -21,7 +21,7 @@ object Crossover {
 
         if (d.isZero) a
         else {
-          val e = d.orthogonalize(a._2.list)
+          val e = d.orthogonalize(a._2.list.toList)
 
           if (e.isZero) a
           else (a._1 + e.magnitude, a._2 append NonEmptyList(e.normalize))
@@ -64,7 +64,7 @@ object Crossover {
       // create the remaining basis vectors
       val initEta = NonEmptyList(parents.last - g)
       val reta = Position.createPositions(bounds, n - zeta.length)
-      val eta = reta.map(r => Position.orthonormalize(initEta :::> r))
+      val eta = reta.map(r => Position.orthonormalize(initEta :::> r.toIList))
 
       // construct the offspring
       for {
@@ -92,7 +92,7 @@ object Crossover {
 
       for {
         s       <- scaled
-        offspring = (parents.list zip s).map { case (p, si) => si *: p }.reduce(_ + _)
+        offspring = (parents.list.toList zip s).map { case (p, si) => si *: p }.reduce(_ + _)
       } yield offspring
 
     }

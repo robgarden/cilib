@@ -47,7 +47,7 @@ object NMPCO extends SafeApp {
     val guide = Guide.nmpc[Mem[List,Double],List](p)
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
-    val pso = cilib.Defaults.nmpco(guide, domain.list)
+    val pso = cilib.Defaults.nmpco(guide, domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
     val syncGBest = Iteration.sync(pso)

@@ -55,7 +55,7 @@ object GCPSO extends SafeApp {
     val cognitive = Guide.pbest[Mem[List,Double],List,Double]
     val gcparams = PSO.GCParams(p, 0, 0, s, f)
 
-    val gbestPSO = Defaults.gcpso(0.729844, 1.496180, 1.496180, cognitive, domain.list)
+    val gbestPSO = Defaults.gcpso(0.729844, 1.496180, 1.496180, cognitive, domain.list.toList)
 
   def pso: List[Particle[Mem[List,Double],List,Double]] => Particle[Mem[List,Double],List,Double] => StepS[List,Double,PSO.GCParams,Result[Particle[Mem[List,Double],List,Double]]] = xs => x => StepS(gbestPSO(xs)(x))
 

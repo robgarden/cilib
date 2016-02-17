@@ -58,7 +58,7 @@ object PCXBoltzmann extends SafeApp {
     val algs = temperatures.map { temp =>
       val cognitive = Guide.pbest[Mem[List,Double],List,Double]
       val guide = Guide.pcxBoltzmann[Mem[List,Double],List](s1, s2, temp, (c, _) => c)
-      val pcx = Defaults.gbestBounded(0.729844, 1.496180, 1.496180, cognitive, guide, domain.list)
+      val pcx = Defaults.gbestBounded(0.729844, 1.496180, 1.496180, cognitive, guide, domain.list.toList)
       Iteration.sync(pcx)
     }
 

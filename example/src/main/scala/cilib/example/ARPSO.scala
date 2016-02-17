@@ -56,7 +56,7 @@ object ARPSO extends SafeApp {
     val cognitive = Guide.pbest[Mem[List,Double],List,Double]
     val social = Guide.gbest[Mem[List,Double],List,Double]
 
-    val gbestPSO = Defaults.arpso(0.729844, 1.496180, 1.496180, length, l, h, cognitive, social, domain.list)
+    val gbestPSO = Defaults.arpso(0.729844, 1.496180, 1.496180, length, l, h, cognitive, social, domain.list.toList)
 
   def pso: List[Particle[Mem[List,Double],List,Double]] => Particle[Mem[List,Double],List,Double] => StepS[List,Double,PSO.ARPSOParams,Result[Particle[Mem[List,Double],List,Double]]] = xs => x => StepS(gbestPSO(xs)(x))
 

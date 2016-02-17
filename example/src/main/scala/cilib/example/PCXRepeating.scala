@@ -64,7 +64,7 @@ object PCXRepeating extends SafeApp {
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
     // val pcx = gbestBounded(0.729844, 1.496180, 1.496180, cognitive, guide, domain.list)
-    val pcx = cilib.Defaults.pcxPSO(guide, domain.list)
+    val pcx = cilib.Defaults.pcxPSO(guide, domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
     val syncGBest = Iteration.sync(pcx)

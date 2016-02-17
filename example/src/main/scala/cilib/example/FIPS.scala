@@ -54,7 +54,7 @@ object FIPS extends SafeApp {
     val guide = (Guide.fips[Mem[List,Double],List]((c,_) => c, c1, c2))
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
-    val fipsPSO = constrictionPSONoCo(w, List(guide), domain.list)
+    val fipsPSO = constrictionPSONoCo(w, List(guide), domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
     val syncGBest = Iteration.sync(fipsPSO)

@@ -123,7 +123,7 @@ object Position {
     Point(xs)
 
   def createPosition[A](domain: NonEmptyList[Interval[Double]])(implicit F: SolutionRep[List]) =
-    domain.traverseU(x => Dist.uniform(x.lower.value, x.upper.value)) map (x => Position(x.list))
+    domain.traverseU(x => Dist.uniform(x.lower.value, x.upper.value)) map (x => Position(x.list.toList))
 
   def createPositions(domain: NonEmptyList[Interval[Double]], n: Int)(implicit ev: SolutionRep[List]) =
     createPosition(domain) replicateM n
@@ -133,7 +133,7 @@ object Position {
 
   import spire.algebra.{Module,Field}
   def mean[F[_],A](positions: NonEmptyList[Position[F,A]])(implicit M: Module[F[A],A], A: Field[A]) =
-    (A.one / positions.size.toDouble) *: positions.list.reduce(_ + _)
+    (A.one / positions.size.toDouble) *: positions.list.toList.reduce(_ + _)
 
   def orthonormalize[F[_]:Foldable:Zip, A:Field:NRoot](vs: NonEmptyList[Position[F,A]])(implicit M: Module[F[A],A]) = {
     val bases = vs.foldLeft(NonEmptyList(vs.head)) { (ob, v) =>
@@ -164,7 +164,7 @@ final class Interval[A] private[cilib] (val lower: Bound[A], val upper: Bound[A]
 
    // Intervals _definitely_ have at least 1 element, so invariant in the type
   def ^(n: Int): NonEmptyList[Interval[A]] =
-    NonEmptyList.nel(this, (1 to n - 1).map(_ => this).toList)
+    NonEmptyList.nel(this, (1 to n - 1).map(_ => this).toList.toIList)
 
 }
 

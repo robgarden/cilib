@@ -47,7 +47,7 @@ object Barebones extends SafeApp {
     val guide = Guide.gbest[Mem[List,Double],List,Double]
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
-    val barebones = cilib.Defaults.bb(guide, domain.list)
+    val barebones = cilib.Defaults.bb(guide, domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
     val syncGBest = Iteration.sync(barebones)

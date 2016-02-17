@@ -50,7 +50,7 @@ object RVar {
     next[Double](Generator.DoubleGen) replicateM n
 
   def choose[A](xs: NonEmptyList[A]) =
-    Dist.uniformInt(0, xs.size - 1) map { xs.list.apply(_) }
+    Dist.uniformInt(0, xs.size - 1) map { xs.list.toList.apply(_) }
 
   // implementation of Oleg Kiselgov's perfect shuffle:
   // http://okmij.org/ftp/Haskell/perfect-shuffle.txt

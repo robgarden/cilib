@@ -23,11 +23,11 @@ object GBestPSOProblems {
   val c1 = 1.459
   val c2 = 1.459
 
-  val repeats = 1
+  val repeats = 30
   val iterations = 1000
 
-  // val output = "/home/robertgarden/Dropbox/results/problems/star"
-  val output = "/Users/robertgarden/Desktop/star"
+  val output = "/home/robertgarden/Dropbox/results/problems/star"
+  // val output = "/Users/robertgarden/Desktop/star"
 
   val cognitive = Guide.pbest[Mem[List,Double],List,Double]
   val (strategy, guide) = ("star", Guide.gbest[Mem[List,Double],List,Double])
@@ -59,15 +59,15 @@ object GBestPSOProblems {
 
   def starLineTask(prob: ProblemDef): Task[String] = {
     val tasks: Task[List[Maybe[Double]]] = Task.gatherUnordered((0 until repeats).toList.map(i => starTask(prob, i.toLong)))
-    val taskAvg: Task[Double] = tasks.map(l => l.sequence.map(ds => ds.sum / ds.length).getOrElse(-666.0))
-    taskAvg.map(avg => s"$strategy,$iterations,$repeats,${prob.name},$dim,$w,$c1,$c2,$avg")
+    val taskAvg: Task[String] = tasks.map(l => l.sequence.map(_.mkString(",")).getOrElse("Error"))
+    taskAvg.map(avgs => s"$strategy,$iterations,$repeats,${prob.name},$dim,$w,$c1,$c2,$avgs")
   }
 
   val problemTasks = Task.suspend(Task.gatherUnordered(problems.map(starLineTask)))
 
   def writeOut(lines: List[String]) = {
     printToFile(new java.io.File(s"${output}/${strategy}.txt")) { p =>
-      p.println(s"Strategy,Iterations,Repeat,ProblemClass,Problem,Dimension,w,c1,c2,avgbest")
+      p.println(s"Strategy,Iterations,Repeat,ProblemClass,Problem,Dimension,w,c1,c2,avgs")
       lines.foreach(p.println)
     }
   }

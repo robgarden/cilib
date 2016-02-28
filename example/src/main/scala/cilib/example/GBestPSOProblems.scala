@@ -19,9 +19,12 @@ object GBestPSOProblems {
   val dim = 10
   val problems = Problems.benchmarkSet(dim)
 
-  val w = 0.9
-  val c1 = 1.459
-  val c2 = 1.459
+  // val w = 0.9
+  // val c1 = 1.459
+  // val c2 = 1.459
+  val w = 0.7
+  val c1 = 1.5
+  val c2 = 1.475
 
   val repeats = 30
   val iterations = 1000

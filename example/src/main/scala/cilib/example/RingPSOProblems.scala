@@ -26,7 +26,7 @@ object RingPSOProblems {
   val repeats = 30
   val iterations = 1000
 
-  val output = "/home/robertgarden/Dropbox/results/problems/ring"
+  val output = "/home/robertgarden/Dropbox/results/problems"
   // val output = "/Users/robertgarden/Desktop/star"
 
   val cognitive = Guide.pbest[Mem[List,Double],List,Double]

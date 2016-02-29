@@ -9,7 +9,7 @@ import spire.implicits._
 
 import pl.project13.scala.rainbow._
 
-object WheelPSOProblems {
+object HypercubePSOProblems {
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) = {
     val p = new java.io.PrintWriter(f)
@@ -19,9 +19,9 @@ object WheelPSOProblems {
   val dim = 10
   val problems = Problems.benchmarkSet(dim)
 
-  val w = 0.7
-  val c1 = 1.4
-  val c2 = 1.429
+  val w = 0.5
+  val c1 = 1.1
+  val c2 = 1.26
 
   val repeats = 30
   val iterations = 1000
@@ -30,8 +30,8 @@ object WheelPSOProblems {
   // val output = "/Users/robertgarden/Desktop/star"
 
   val cognitive = Guide.pbest[Mem[List,Double],List,Double]
-  val wheel = Selection.wheel[Particle[Mem[List,Double], List, Double]]
-  val (strategy, guide) = ("wheel", Guide.nbest(wheel))
+  val hypercube = Selection.hypercube[Particle[Mem[List,Double],List,Double]]
+  val (strategy, guide) = ("hypercube", Guide.nbest(hypercube))
 
   println()
   println(s"Running: '${strategy.magenta}':")

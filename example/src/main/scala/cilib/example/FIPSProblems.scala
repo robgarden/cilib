@@ -19,9 +19,9 @@ object FERProblems {
   val dim = 10
   val problems = Problems.benchmarkSet(dim)
 
-  val w  = 0.723529412
-  val c1 = 1.405882353
-  val c2 = 1.617647059
+  val w = 0.876470588
+  val c1 = 0.535294118
+  val c2 = 0.817647059
 
   val repeats = 30
   val iterations = 1000
@@ -29,8 +29,7 @@ object FERProblems {
   val output = "/home/robertgarden/Dropbox/results/problems"
   // val output = "/Users/robertgarden/Desktop/star"
 
-  val cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1, Dist.stdUniform)
-  val strategy  = "fer"
+  val strategy  = "fips"
 
   println()
   println(s"Running: '${strategy.magenta}':")
@@ -44,15 +43,13 @@ object FERProblems {
   println()
 
   def starTask(prob: ProblemDef, seed: Long): Task[Maybe[Double]] = Task {
-    val s = (1 to prob.dim).toList.map(_ => math.pow(prob.u - prob.l,2)).sum
-    val domain = Interval(closed(prob.l), closed(prob.u))^prob.dim
+    val guide = (Guide.fips[Mem[List,Double],List]((c,_) => c, c1, c2))
+    val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
-    val guide = (Guide.fer[Mem[List,Double],List](s), c2, Dist.stdUniform)
-
-    val ferPSO = Defaults.constrictionPSO(w, List(cognitive, guide))
+    val fipsPSO = constrictionPSONoCo(w, List(guide), domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
-    val sync = Iteration.sync(ferPSO)
+    val sync = Iteration.sync(fipsPSO)
     val finalParticles = Runner.repeat(iterations, sync, swarm).run(Min)(prob.problem).eval(RNG init seed)
     val fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
 

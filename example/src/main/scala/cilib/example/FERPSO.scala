@@ -52,10 +52,12 @@ object FERPSO extends SafeApp {
 
   def ferFuture(w: Double, c1: Double, c2: Double, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
       val s = (1 to prob.dim).toList.map(_ => math.pow(prob.u - prob.l,2)).sum
+      val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
+
       val cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1, Dist.stdUniform)
       val guide = (Guide.fer[Mem[List,Double],List](s), c2, Dist.stdUniform)
 
-      val ferPSO = constrictionPSO(w, List(cognitive, guide))
+      val ferPSO = constrictionPSO(w, List(cognitive, guide), domain.list.toList)
 
       val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(prob.l),closed(prob.u))^prob.dim, 20)
       val syncGBest = Iteration.sync(ferPSO)

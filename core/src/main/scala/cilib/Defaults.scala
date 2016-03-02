@@ -107,16 +107,20 @@ object Defaults {
 
 def constrictionPSO[S,F[_]:Traverse](
   X: Double,
-  guideStrategies: List[(Guide[S,F,Double],Double,RVar[Double])]
+  guideStrategies: List[(Guide[S,F,Double],Double,RVar[Double])],
+  bounds: F[Interval[Double]]
 )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
   collection => x => for {
+    p0      <- evalParticle(x)
+    p01     <- updatePBestIfInBounds(p0, bounds)
+
     guides  <- guideStrategies.map { case (gs, _, _) => gs(collection, x) }.sequenceU
     guidesAndCo = guides.zip(guideStrategies.map(_._2)).zip(guideStrategies.map(_._3)).map { case ((g,c),r) => (g,c,r) }
     v       <- velocityWithConstriction(x, guidesAndCo, X)
-    p       <- stdPosition(x, v)
+    p       <- stdPosition(p01, v)
     p2      <- evalParticle(p)
     p3      <- updateVelocity(p2, v)
-    updated <- updatePBest(p3)
+    updated <- updatePBestIfInBounds(p3, bounds)
   } yield cilib.One(updated)
 
   def constrictionPSONoCo[S,F[_]:Traverse](

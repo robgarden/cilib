@@ -49,7 +49,7 @@ object FERProblems {
 
     val guide = (Guide.fer[Mem[List,Double],List](s), c2, Dist.stdUniform)
 
-    val ferPSO = Defaults.constrictionPSO(w, List(cognitive, guide))
+    val ferPSO = Defaults.constrictionPSO(w, List(cognitive, guide), domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
     val sync = Iteration.sync(ferPSO)

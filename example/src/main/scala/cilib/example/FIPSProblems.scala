@@ -9,7 +9,7 @@ import spire.implicits._
 
 import pl.project13.scala.rainbow._
 
-object FERProblems {
+object FIPSProblems {
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) = {
     val p = new java.io.PrintWriter(f)
@@ -46,7 +46,7 @@ object FERProblems {
     val guide = (Guide.fips[Mem[List,Double],List]((c,_) => c, c1, c2))
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
-    val fipsPSO = constrictionPSONoCo(w, List(guide), domain.list.toList)
+    val fipsPSO = Defaults.constrictionPSONoCo(w, List(guide), domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
     val sync = Iteration.sync(fipsPSO)

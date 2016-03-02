@@ -47,7 +47,7 @@ object FDRProblems {
   def starTask(prob: ProblemDef, seed: Long): Task[Maybe[Double]] = Task {
     val domain = Interval(closed(prob.l), closed(prob.u))^prob.dim
 
-    val fdrPSO = Defaults.constrictionPSO(w, List(cognitive, guide))
+    val fdrPSO = Defaults.constrictionPSO(w, List(cognitive, guide), domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)
     val sync = Iteration.sync(fdrPSO)

@@ -51,19 +51,21 @@ object FDRFuture extends SafeApp {
   println()
 
   def fdrFuture(w: Double, c1: Double, c2: Double, prob: ProblemDef, seed: Long): Future[Maybe[Double]] = Future {
-      val cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1, Dist.stdUniform)
-      val fdr = (Guide.fdr[Mem[List,Double]], c2, Dist.stdUniform)
+    val domain = Interval(closed(prob.l), closed(prob.u))^prob.dim
 
-      val fdrPSO = constrictionPSO(w, List(cognitive, fdr))
+    val cognitive = (Guide.pbest[Mem[List,Double],List,Double], c1, Dist.stdUniform)
+    val fdr = (Guide.fdr[Mem[List,Double]], c2, Dist.stdUniform)
 
-      val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(prob.l),closed(prob.u))^prob.dim, 20)
-      val syncGBest = Iteration.sync(fdrPSO)
-      val finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).eval(RNG init seed)
-      val fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
+    val fdrPSO = constrictionPSO(w, List(cognitive, fdr), domain.list.toList)
 
-      val percent = params.indexOf((w,c1,c2)).toDouble / params.length * 100
-      println(f"${prob.name} $seed $percent%2.2f" + "%")
-      fitnesses.map(_.min)
+    val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(Interval(closed(prob.l),closed(prob.u))^prob.dim, 20)
+    val syncGBest = Iteration.sync(fdrPSO)
+    val finalParticles = Runner.repeat(iterations, syncGBest, swarm).run(Min)(prob.problem).eval(RNG init seed)
+    val fitnesses = finalParticles.traverse(e => e.state.b.fit).map(_.map(_.fold(_.v,_.v)))
+
+    val percent = params.indexOf((w,c1,c2)).toDouble / params.length * 100
+    println(f"${prob.name} $seed $percent%2.2f" + "%")
+    fitnesses.map(_.min)
   }
 
   def ferFutureLine(w: Double, c1: Double, c2: Double, probClass: String, prob: ProblemDef): Future[String] = {

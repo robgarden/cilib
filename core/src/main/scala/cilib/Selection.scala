@@ -60,4 +60,21 @@ object Selection {
 
       l.zipWithIndex.filter { case (xi, i) => hamming(binary(i), bin) == 1 }.map(_._1)
     }
+
+  def boltzmann[F[_]](temp: Double) =
+    (a: Position[F,Double], b: Position[F,Double]) => {
+      val fitDiff = for {
+        fa  <- a.fit
+        fb  <- b.fit
+        fav =  fa.fold(_.v, _.v)
+        fbv =  fb.fold(_.v, _.v)
+      } yield fav - fbv
+
+      val step: Step[F,Double,Maybe[Position[F,Double]]] = Step.pointR(Dist.stdUniform.map(r => fitDiff.map { f =>
+        val right = 1.0 / (1.0 + spire.math.exp(f / temp))
+        if (r > right) b else a
+      }))
+
+      step
+    }
 }

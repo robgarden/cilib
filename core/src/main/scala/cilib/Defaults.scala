@@ -259,6 +259,44 @@ def constrictionPSO[S,F[_]:Traverse](
       } yield cilib.One(updated)
     }
 
+  def pcxBoltzmanPSODeb[S,F[_]:Traverse:Zip](
+    w: Double, c1: Double, c2: Double, s1: Double, s2: Double, temp: Double,
+    bounds: F[Interval[Double]]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], P: Previous[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x => {
+      val gb = Guide.gbest
+      val pb = Guide.pbest
+      val prev = Guide.previous
+      val pcx = Crossover.pcx[F](s1, s2)
+      val boltzmann = Selection.boltzmann[F](temp)
+
+      implicit def positionOrder: Order[Position[F,Double]] = Order.orderBy(_.magnitude)
+
+      for {
+        p0      <- evalParticle(x)
+        p01     <- updatePBestIfInBounds(p0, bounds)
+
+        gbest   <- gb(collection, p01)
+        pbest   <- pb(collection, p01)
+        pos     <- Step.point(p01.pos)
+        pre     <- prev(collection, p01)
+
+        parents  = NonEmptyList(gbest, pbest, pos)
+        parents1 = NonEmptyList(gbest, pbest, pos, pre)
+
+        foundDistinct = parents1.distinct.size >= 2
+
+        g       <-
+        if (parents.distinct.size == 3) pcx(parents).flatMap(child => boltzmann(child, gbest).map(_.getOrElse(gbest)))
+        else if (parents1.distinct.size >= 2) pcx(parents1).flatMap(child => boltzmann(child, gbest).map(_.getOrElse(gbest)))
+        else stdVelocity(p01, gbest, pbest, w, c1, c2)
+
+        p <- updateVelocity(p01, g)
+        posPrev <- positionWithPrev(p, g)
+        updated <- if (!foundDistinct) stdPosition(posPrev, g) else positionWithPrev(p, g)
+      } yield cilib.One(updated)
+    }
+
   // This is only defined for the gbest topology because the "method" described in Edwin's
   // paper for alternate topologies _does not_ make sense. I can only assume that there is
   // some additional research that needs to be done to correctly create an algorithm to

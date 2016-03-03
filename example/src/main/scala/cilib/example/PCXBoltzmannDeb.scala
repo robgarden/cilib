@@ -58,7 +58,7 @@ object PCXBoltzmannDeb extends SafeApp {
     val temperatures = ParamHelper.decreasing(1, 100, iterations)
 
     val algs = temperatures.map { temp =>
-      val pcx = Defaults.pcxBoltzmanPSODeb(0.729844, 1.496180, 1.496180, s1, s1, temp, domain.list.toList)
+      val pcx = Defaults.pcxBoltzmanPSODeb(0.729844, 1.496180, 1.496180, s1, s2, temp, domain.list.toList)
       Iteration.sync(pcx)
     }
 

@@ -61,20 +61,28 @@ object Selection {
       l.zipWithIndex.filter { case (xi, i) => hamming(binary(i), bin) == 1 }.map(_._1)
     }
 
-  def boltzmann[F[_]](temp: Double) =
+  def boltzmann[F[_]:Foldable](temp: Double) =
     (a: Position[F,Double], b: Position[F,Double]) => {
-      val fitDiff = for {
-        fa  <- a.fit
-        fb  <- b.fit
-        fav =  fa.fold(_.v, _.v)
-        fbv =  fb.fold(_.v, _.v)
-      } yield fav - fbv
+      val fitDiff: Step[F,Double,Maybe[Double]] = for {
+        aa  <- Step.evalF(a)
+        bb  <- Step.evalF(b)
+        fa   = aa.fit
+        fb   = bb.fit
+        fav  = fa.map(_.fold(_.v, _.v))
+        fbv  = fb.map(_.fold(_.v, _.v))
+      } yield (fav |@| fbv) { _ - _ }
 
-      val step: Step[F,Double,Maybe[Position[F,Double]]] = Step.pointR(Dist.stdUniform.map(r => fitDiff.map { f =>
-        val right = 1.0 / (1.0 + spire.math.exp(f / temp))
-        if (r > right) b else a
-      }))
+      for {
+        fd   <- fitDiff
+        r    <- Step.pointR(Dist.stdUniform)
+        right = fd.map(f => 1.0 / (1.0 + spire.math.exp(f / temp)))
+      } yield right.map(rs => if (r > rs) b else a)
 
-      step
+      // val step: Step[F,Double,Maybe[Position[F,Double]]] = Step.pointR(Dist.stdUniform.map(r => fitDiff.map { f =>
+      //   val right = 1.0 / (1.0 + spire.math.exp(f / temp))
+      //   if (r > right) b else a
+      // }))
+
+      // step
     }
 }

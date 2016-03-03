@@ -71,7 +71,7 @@ object Problems {
     "um-s" -> List(
       ProblemDef("absolute", problemNel(absoluteValue), -100.0, 100.0, dim),
       ProblemDef("differentPowers", problem2And(differentPowers), -100.0, 100.0, dim),
-  //    ProblemDef("hyperEllipsoid", problemNel(hyperEllipsoid), -10.0, 10.0, dim),
+      ProblemDef("hyperEllipsoid", problemNel(hyperEllipsoid), -10.0, 10.0, dim),
       ProblemDef("powellSum", problemNel(powellSum), -1.0, 1.0, dim),
       ProblemDef("spherical", problemNel(spherical), -100.0, 100.0, dim)
     ),

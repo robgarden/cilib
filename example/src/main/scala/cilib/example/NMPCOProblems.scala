@@ -26,8 +26,7 @@ object NMPCOProblems {
 
   val output = "/home/robertgarden/Dropbox/results/problems"
 
-  val cognitive = Guide.pbest[Mem[List,Double],List,Double]
-  val (strategy, guide) = ("star", Guide.gbest[Mem[List,Double],List,Double])
+  val strategy = "nmpco"
 
   println()
   println(s"Running: '${strategy.magenta}':")
@@ -41,9 +40,9 @@ object NMPCOProblems {
   println()
 
   def starTask(prob: ProblemDef, seed: Long): Task[Maybe[Double]] = Task {
-    val guide = Guide.nmpc[Mem[List,Double],List](p)
     val domain = Interval(closed(prob.l),closed(prob.u))^prob.dim
 
+    val guide = Guide.nmpc[Mem[List,Double],List](p)
     val pso = cilib.Defaults.nmpco(guide, domain.list.toList)
 
     val swarm = Position.createCollection(PSO.createParticle(x => Entity(Mem(x, x.zeroed), x)))(domain, 20)

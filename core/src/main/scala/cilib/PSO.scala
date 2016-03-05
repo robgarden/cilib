@@ -17,6 +17,9 @@ import spire.syntax.module._
 object PSO {
   import Lenses._
 
+  def mutateNoise[F[_]:Traverse](p: Position[F,Double]): Step[F,Double,Position[F,Double]] =
+    Step.pointR(p.traverse(pi => Dist.stdUniform.map(_ * pi)))
+
   // Constrain this better - Not numeric. Operation for vector addition
   def stdPosition[S,F[_],A](
     c: Particle[S,F,A],
@@ -191,6 +194,12 @@ object PSO {
 
   def better[S,F[_],A](a: Particle[S,F,A], b: Particle[S,F,A]): Step[F,A,Particle[S,F,A]] =
     Step.withOpt(o => RVar.point(if (Fitness.compare(a.pos, b.pos).run(o) == a.pos) a else b))
+
+  def betterPos[S,F[_],A](a: Position[F,A], b: Position[F,A]): Step[F,A,Position[F,A]] =
+    Step.withOpt(o => RVar.point(if (Fitness.compare(a, b).run(o) == a) a else b))
+
+  def worsePos[S,F[_],A](a: Position[F,A], b: Position[F,A]): Step[F,A,Position[F,A]] =
+    Step.withOpt(o => RVar.point(if (Fitness.compare(a, b).run(o) == a) b else a))
 
   def createParticle[S,F[_]](f: Position[F,Double] => Particle[S,F,Double])(pos: Position[F,Double]): Particle[S,F,Double] =
     f(pos)

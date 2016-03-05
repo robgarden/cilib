@@ -193,15 +193,15 @@ object Guide {
       val guide = Guide.nbest[S,F,Double](selection)
       val nbest = guide(collection, x)
       val pcx = Crossover.pcx[F](s1, s2)
-      val offspring = pcx(parents).flatMap(Step.evalF[F,Double])
+      // val offspring = pcx(parents).flatMap(Step.evalF[F,Double])
 
       def repeat(r: Int): Step[F,Double,Position[F,Double]] =
         if (r >= retries) nbest
         else for {
-          child    <- offspring
+          child    <- pcx(parents).flatMap(Step.evalF[F,Double])
           nb       <- nbest
           isBetter <- Step.withOpt(o => RVar.point(Fitness.fittest(child, nb).run(o)))
-          chosen   <- if (isBetter) offspring else repeat(r + 1)
+          chosen   <- if (isBetter) Step.point[F,Double,Position[F,Double]](child) else repeat(r + 1)
         } yield chosen
 
       repeat(0)

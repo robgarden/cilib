@@ -16,7 +16,7 @@ object FDRProblems {
     try { op(p) } finally { p.close() }
   }
 
-  val dim = 10
+  val dim = 30
   val problems = Problems.benchmarkSet(dim)
 
   val w = 0.74

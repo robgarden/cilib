@@ -16,12 +16,12 @@ object RingDistancePSOProblems {
     try { op(p) } finally { p.close() }
   }
 
-  val dim = 10
+  val dim = 30
   val problems = Problems.benchmarkSet(dim)
 
-  val w = 0.8
-  val c1 = 1.6
-  val c2 = 1.46
+  val w = 0.755555556
+  val c1 = 1.588888889
+  val c2 = 1.455555556
 
   val repeats = 30
   val iterations = 1000

@@ -16,7 +16,7 @@ object PCXProblems {
     try { op(p) } finally { p.close() }
   }
 
-  val dim = 10
+  val dim = 30
   val problems = Problems.benchmarkSet(dim)
 
   val s1 = 2.582352941

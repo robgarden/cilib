@@ -16,12 +16,12 @@ object WheelPSOProblems {
     try { op(p) } finally { p.close() }
   }
 
-  val dim = 10
+  val dim = 30
   val problems = Problems.benchmarkSet(dim)
 
   val w = 0.7
-  val c1 = 1.4
-  val c2 = 1.429
+  val c1 = 1.429411765
+  val c2 = 1.429411765
 
   val repeats = 30
   val iterations = 1000

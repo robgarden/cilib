@@ -16,10 +16,10 @@ object HypercubePSOProblems {
     try { op(p) } finally { p.close() }
   }
 
-  val dim = 10
+  val dim = 30
   val problems = Problems.benchmarkSet(dim)
 
-  val w = 0.5
+  val w = 0.526666667
   val c1 = 1.1
   val c2 = 1.26
 

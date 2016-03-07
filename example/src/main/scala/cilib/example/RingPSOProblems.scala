@@ -16,10 +16,10 @@ object RingPSOProblems {
     try { op(p) } finally { p.close() }
   }
 
-  val dim = 10
+  val dim = 30
   val problems = Problems.benchmarkSet(dim)
 
-  val w = 0.6
+  val w = 0.566666667
   val c1 = 1.1
   val c2 = 1.58
 

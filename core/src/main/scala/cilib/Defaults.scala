@@ -314,7 +314,7 @@ def constrictionPSO[S,F[_]:Traverse](
         pos      = p01.pos
 
         parents  = NonEmptyList(gbest, pbest, pos)
-        foundDistinct = parents1.distinct.size == 3
+        foundDistinct = parents.distinct.size == 3
 
         g <- if (foundDistinct) pcx(parents).flatMap(child => boltzmann(child, gbest).map(_.getOrElse(gbest)))
              else for {

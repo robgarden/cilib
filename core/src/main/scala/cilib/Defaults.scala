@@ -296,6 +296,40 @@ def constrictionPSO[S,F[_]:Traverse](
       } yield cilib.One(updated)
     }
 
+  def pcxBoltzmanPSONoise[S,F[_]:Traverse:Zip](s1: Double, s2: Double, temp: Double, bounds: F[Interval[Double]])(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x => {
+      val gb = Guide.gbest
+      val pb = Guide.pbest
+      val pcx = Crossover.pcx[F](s1, s2)
+      val boltzmann = Selection.boltzmann[F](temp)
+
+      implicit def positionOrder: Order[Position[F,Double]] = Order.orderBy(_.magnitude)
+
+      for {
+        p0      <- evalParticle(x)
+        p01     <- updatePBestIfInBounds(p0, bounds)
+
+        gbest   <- gb(collection, p01)
+        pbest   <- pb(collection, p01)
+        pos      = p01.pos
+
+        parents  = NonEmptyList(gbest, pbest, pos)
+        foundDistinct = parents1.distinct.size == 3
+
+        g <- if (foundDistinct) pcx(parents).flatMap(child => boltzmann(child, gbest).map(_.getOrElse(gbest)))
+             else for {
+               mutated   <- mutateNoise(p01.pos)
+               child     <- Step.evalF(mutated)
+               pbestNew  <- betterPos(p01.pos, child)
+               posNew    <- worsePos(p01.pos, child)
+               parentsNew = NonEmptyList(gbest, pbestNew, posNew)
+               pcxd      <- pcx(parentsNew).flatMap(child => boltzmann(child, gbest).map(_.getOrElse(gbest)))
+             } yield pcxd
+
+        updated <- replace(p01, g)
+      } yield cilib.One(updated)
+    }
+
   def pcxBoltzmanPSODeb[S,F[_]:Traverse:Zip](
     w: Double, c1: Double, c2: Double, s1: Double, s2: Double, temp: Double,
     bounds: F[Interval[Double]]

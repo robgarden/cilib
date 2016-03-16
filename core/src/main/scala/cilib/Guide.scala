@@ -193,14 +193,13 @@ object Guide {
       val guide = Guide.nbest[S,F,Double](selection)
       val nbest = guide(collection, x)
       val pcx = Crossover.pcx[F](s1, s2)
-      // val offspring = pcx(parents).flatMap(Step.evalF[F,Double])
 
       def repeat(r: Int): Step[F,Double,Position[F,Double]] =
         if (r >= retries) nbest
         else for {
           child    <- pcx(parents).flatMap(Step.evalF[F,Double])
           nb       <- nbest
-          isBetter <- Step.withOpt(o => RVar.point(Fitness.fittest(child, nb).run(o)))
+          isBetter <- Step.liftK(Fitness.fittest(child, nb))
           chosen   <- if (isBetter) Step.point[F,Double,Position[F,Double]](child) else repeat(r + 1)
         } yield chosen
 
@@ -221,6 +220,21 @@ object Guide {
         repeater  =  pcxRepeater(s1, s2, retries, parents, selection)
         chosen    <- repeater(collection, x)
       } yield chosen
+    }
+
+  def pcxNParents[S,F[_]:Foldable:Zip](s1: Double, s2: Double, n: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =
+    (collection, x) => {
+
+      val sample = RVar.sample(n, collection)
+      val parents = sample.run.map(_.flatMap(l => l.toNel.toMaybe)).map(_.getOrElse(sys.error("Need 3 parents")))
+      val pcx = Crossover.pcx[F](s1, s2)
+
+      for {
+        ps        <- Step.pointR(parents)
+        pbparents =  ps.map(p => M._memory.get(p.state))
+        chosen    <- pcx(pbparents)
+      } yield chosen
+
     }
 
   def repeatingPCXNParents[S,F[_]:Foldable:Zip](s1: Double, s2: Double, retries: Int, n: Int, selection: Selection[Entity[S,F,Double]])(implicit M: Memory[S,F,Double], MO: Module[F[Double],Double]): Guide[S,F,Double] =

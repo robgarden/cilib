@@ -8,6 +8,9 @@ import spire.algebra.{Order => _, _}
 import spire.implicits._
 import spire.syntax.module._
 
+import monocle._, Monocle._
+import monocle.syntax._
+
 object Defaults {
 
   // The function below needs the guides for the particle, for the standard PSO update
@@ -199,10 +202,57 @@ def constrictionPSO[S,F[_]:Traverse](
       g       <- guide(collection, p01)
       p       <- updateVelocity(p01, g)
       updated <- replace(p, g)
-      //p2      <- evalParticle(p)
-      //p3      <- updateVelocity(p2, g)
-      //updated <- updatePBestIfInBounds(p3, bounds)
     } yield cilib.One(updated)
+
+    import Lenses._
+
+  def pcxPSOPBest[S,F[_]:Traverse:Zip](
+    guide: Guide[S,F,Double],
+    bounds: F[Interval[Double]]
+  )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+    collection => x =>
+      for {
+        p0       <- evalParticle(x)
+        g        <- guide(collection, p0).flatMap(Step.evalF[F,Double])
+        pos      <- Step.evalF(p0.pos)
+        isBetter <- Step.liftK(Fitness.fittest(pos, g))
+        updated   = if (isBetter) Entity(p0.state, g)
+                    else          Entity(p0.state, pos)
+        updated1  = if (isBetter) {
+          if (!inBounds(pos.pos, bounds)) updated
+          else Entity(p0.state applyLens M._memory set pos, g)
+        } else {
+          if (!inBounds(g.pos, bounds)) updated
+          else Entity(p0.state applyLens M._memory set g, pos)
+        }
+      } yield cilib.One(updated1)
+
+  // def pcxPSOPBest[S,F[_]:Traverse:Zip](
+  //   s1: Double, s2: Double,
+  //   guide: Guide[S,F,Double],
+  //   bounds: F[Interval[Double]]
+  // )(implicit M: Memory[S,F,Double], V: Velocity[S,F,Double], MO: Module[F[Double],Double]): List[Particle[S,F,Double]] => Particle[S,F,Double] => Step[F,Double,Result[Particle[S,F,Double]]] =
+  //   collection => x => {
+  //     val pcxN = Guide.pcxNParents[S,F](s1, s2, 3, (c, _) => c)
+
+  //     for {
+  //       p0 <- evalParticle(x)
+  //       g  <- guide(collection, p0)
+  //       p  <- updateVelocity(p0, g)
+  //       p1 <- replace(p, g)
+
+  //       pbest    <- Step.evalF(M._memory.get(p1.state))
+  //       pos      <- Step.evalF(p1.pos)
+  //       isBetter <- Step.liftK(Fitness.fittest(pos, pbest))
+  //       updated  <- if (!isBetter) Step.point[F,Double,Particle[S,F,Double]](p1)
+  //                   else for {
+  //                     temp         <- pcxN(collection, p1)
+  //                     betterTemp   <- Step.liftK(Fitness.fittest(temp, pos))
+  //                     finalUpdated = if (betterTemp) Entity(p1.state applyLens M._memory set temp, p1.pos)
+  //                                    else Entity(p1.state applyLens M._memory set p1.pos, temp)
+  //                   } yield finalUpdated
+  //     } yield cilib.One(updated)
+  //   }
 
   def pcxPSOPrev[S,F[_]:Traverse](
     guide: Guide[S,F,Double],
